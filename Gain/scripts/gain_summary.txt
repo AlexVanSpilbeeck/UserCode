@@ -242,5 +242,360 @@ The following plots have one entry per pixel. Left plots are for BPIX, right are
 \pagebreak
 
 
+\section{2D Maps\label{sec:maps}}
+
+\subsection{gains}
+
+\begin{figure}[htp]
+ \centering
+\subfigure
+ {\includegraphics[width=0.32\textwidth]{MAP_Gain_layer1_RunRUNNUMBER.png}}
+\subfigure
+ {\includegraphics[width=0.32\textwidth]{MAP_Gain_layer2_RunRUNNUMBER.png}}
+\subfigure
+ {\includegraphics[width=0.32\textwidth]{MAP_Gain_layer2_RunRUNNUMBER.png}}
+\caption{2D Maps of the mean gain value per module for the 3 barrel layers (left: layer 1 , center: layer 2 , right: layer 3)}
+\end{figure}
+
+\begin{figure}[htp]
+ \centering
+\subfigure
+ {\includegraphics[width=0.36\textwidth]{MAP_Gain_disk-2_RunRUNNUMBER.png}}
+\subfigure
+ {\includegraphics[width=0.36\textwidth]{MAP_Gain_disk-1_RunRUNNUMBER.png}}
+\subfigure
+ {\includegraphics[width=0.36\textwidth]{MAP_Gain_disk+1_RunRUNNUMBER.png}}
+\subfigure
+ {\includegraphics[width=0.36\textwidth]{MAP_Gain_disk+2_RunRUNNUMBER.png}}
+\caption{2D Maps of the mean gain value per module for the 4 endcap disks (from top left to bottom right: disk-2 , disk-1 , disk+1 , disk+2 )}
+\end{figure}
+
+\pagebreak
+
+
+
+\subsection{pedestals}
+
+\begin{figure}[htp]
+ \centering
+\subfigure
+ {\includegraphics[width=0.32\textwidth]{MAP_Pedestal_layer1_RunRUNNUMBER.png}}
+\subfigure
+ {\includegraphics[width=0.32\textwidth]{MAP_Pedestal_layer2_RunRUNNUMBER.png}}
+\subfigure
+ {\includegraphics[width=0.32\textwidth]{MAP_Pedestal_layer2_RunRUNNUMBER.png}}
+\caption{2D Maps of the mean pedestal value per module for the 3 barrel layers (left: layer 1 , center: layer 2 , right: layer 3)}
+\end{figure}
+
+\begin{figure}[htp]
+ \centering
+\subfigure
+ {\includegraphics[width=0.36\textwidth]{MAP_Pedestal_disk-2_RunRUNNUMBER.png}}
+\subfigure
+ {\includegraphics[width=0.36\textwidth]{MAP_Pedestal_disk-1_RunRUNNUMBER.png}}
+\subfigure
+ {\includegraphics[width=0.36\textwidth]{MAP_Pedestal_disk+1_RunRUNNUMBER.png}}
+\subfigure
+ {\includegraphics[width=0.36\textwidth]{MAP_Pedestal_disk+2_RunRUNNUMBER.png}}
+\caption{2D Maps of the mean pedestal value per module for the 4 endcap disks (from top left to bottom right: disk-2 , disk-1 , disk+1 , disk+2 )}
+\end{figure}
+
+
+\pagebreak
+
+
+
+
+\subsection{Error on 1/gain}
+
+\begin{figure}[htp]
+ \centering
+\subfigure
+ {\includegraphics[width=0.32\textwidth]{MAP_ErrorGain_layer1_RunRUNNUMBER.png}}
+\subfigure
+ {\includegraphics[width=0.32\textwidth]{MAP_ErrorGain_layer2_RunRUNNUMBER.png}}
+\subfigure
+ {\includegraphics[width=0.32\textwidth]{MAP_ErrorGain_layer2_RunRUNNUMBER.png}}
+\caption{2D Maps of the mean error of 1/gain value per module for the 3 barrel layers (left: layer 1 , center: layer 2 , right: layer 3)}
+\end{figure}
+
+\begin{figure}[htp]
+ \centering
+\subfigure
+ {\includegraphics[width=0.36\textwidth]{MAP_ErrorGain_disk-2_RunRUNNUMBER.png}}
+\subfigure
+ {\includegraphics[width=0.36\textwidth]{MAP_ErrorGain_disk-1_RunRUNNUMBER.png}}
+\subfigure
+ {\includegraphics[width=0.36\textwidth]{MAP_ErrorGain_disk+1_RunRUNNUMBER.png}}
+\subfigure
+ {\includegraphics[width=0.36\textwidth]{MAP_ErrorGain_disk+2_RunRUNNUMBER.png}}
+\caption{2D Maps of the mean error of 1/gain value per module for the 4 endcap disks (from top left to bottom right: disk-2 , disk-1 , disk+1 , disk+2 )}
+\end{figure}
+
+\pagebreak
+
+
+
+\subsection{Error on pedestal}
+
+\begin{figure}[htp]
+ \centering
+\subfigure
+ {\includegraphics[width=0.32\textwidth]{MAP_ErrorPedestal_layer1_RunRUNNUMBER.png}}
+\subfigure
+ {\includegraphics[width=0.32\textwidth]{MAP_ErrorPedestal_layer2_RunRUNNUMBER.png}}
+\subfigure
+ {\includegraphics[width=0.32\textwidth]{MAP_ErrorPedestal_layer2_RunRUNNUMBER.png}}
+\caption{2D Maps of the mean error of pedestal value per module for the 3 barrel layers (left: layer 1 , center: layer 2 , right: layer 3)}
+\end{figure}
+
+\begin{figure}[htp]
+ \centering
+\subfigure
+ {\includegraphics[width=0.36\textwidth]{MAP_ErrorPedestal_disk-2_RunRUNNUMBER.png}}
+\subfigure
+ {\includegraphics[width=0.36\textwidth]{MAP_ErrorPedestal_disk-1_RunRUNNUMBER.png}}
+\subfigure
+ {\includegraphics[width=0.36\textwidth]{MAP_ErrorPedestal_disk+1_RunRUNNUMBER.png}}
+\subfigure
+ {\includegraphics[width=0.36\textwidth]{MAP_ErrorPedestal_disk+2_RunRUNNUMBER.png}}
+\caption{2D Maps of the mean error of pedestal value per module for the 4 endcap disks (from top left to bottom right: disk-2 , disk-1 , disk+1 , disk+2 )}
+\end{figure}
+
+
+
+
+
+\subsection{Saturation in ADC}
+
+\begin{figure}[htp]
+ \centering
+\subfigure
+ {\includegraphics[width=0.32\textwidth]{MAP_GainSaturate_layer1_RunRUNNUMBER.png}}
+\subfigure
+ {\includegraphics[width=0.32\textwidth]{MAP_GainSaturate_layer2_RunRUNNUMBER.png}}
+\subfigure
+ {\includegraphics[width=0.32\textwidth]{MAP_GainSaturate_layer2_RunRUNNUMBER.png}}
+\caption{2D Maps of the mean plateau value per module for the 3 barrel layers (left: layer 1 , center: layer 2 , right: layer 3)}
+\end{figure}
+
+\begin{figure}[htp]
+ \centering
+\subfigure
+ {\includegraphics[width=0.36\textwidth]{MAP_GainSaturate_disk-2_RunRUNNUMBER.png}}
+\subfigure
+ {\includegraphics[width=0.36\textwidth]{MAP_GainSaturate_disk-1_RunRUNNUMBER.png}}
+\subfigure
+ {\includegraphics[width=0.36\textwidth]{MAP_GainSaturate_disk+1_RunRUNNUMBER.png}}
+\subfigure
+ {\includegraphics[width=0.36\textwidth]{MAP_GainSaturate_disk+2_RunRUNNUMBER.png}}
+\caption{2D Maps of the mean plateau value per module for the 4 endcap disks (from top left to bottom right: disk-2 , disk-1 , disk+1 , disk+2 )}
+\end{figure}
+
+
+\pagebreak
+
+
+
+
+\subsection{Range in ADC}
+
+\begin{figure}[htp]
+ \centering
+\subfigure
+ {\includegraphics[width=0.32\textwidth]{MAP_GainDynamicRange_layer1_RunRUNNUMBER.png}}
+\subfigure
+ {\includegraphics[width=0.32\textwidth]{MAP_GainDynamicRange_layer2_RunRUNNUMBER.png}}
+\subfigure
+ {\includegraphics[width=0.32\textwidth]{MAP_GainDynamicRange_layer2_RunRUNNUMBER.png}}
+\caption{2D Maps of the mean range value per module for the 3 barrel layers (left: layer 1 , center: layer 2 , right: layer 3)}
+\end{figure}
+
+\begin{figure}[htp]
+ \centering
+\subfigure
+ {\includegraphics[width=0.36\textwidth]{MAP_GainDynamicRange_disk-2_RunRUNNUMBER.png}}
+\subfigure
+ {\includegraphics[width=0.36\textwidth]{MAP_GainDynamicRange_disk-1_RunRUNNUMBER.png}}
+\subfigure
+ {\includegraphics[width=0.36\textwidth]{MAP_GainDynamicRange_disk+1_RunRUNNUMBER.png}}
+\subfigure
+ {\includegraphics[width=0.36\textwidth]{MAP_GainDynamicRange_disk+2_RunRUNNUMBER.png}}
+\caption{2D Maps of the mean range value per module for the 4 endcap disks (from top left to bottom right: disk-2 , disk-1 , disk+1 , disk+2 )}
+\end{figure}
+
+
+\pagebreak
+
+
+
+
+
+\subsection{Lowest Fit point in VCAL}
+
+\begin{figure}[htp]
+ \centering
+\subfigure
+ {\includegraphics[width=0.32\textwidth]{MAP_GainLowPoint_layer1_RunRUNNUMBER.png}}
+\subfigure
+ {\includegraphics[width=0.32\textwidth]{MAP_GainLowPoint_layer2_RunRUNNUMBER.png}}
+\subfigure
+ {\includegraphics[width=0.32\textwidth]{MAP_GainLowPoint_layer2_RunRUNNUMBER.png}}
+\caption{2D Maps of the mean lowest fitted VCAL value per module for the 3 barrel layers (left: layer 1 , center: layer 2 , right: layer 3)}
+\end{figure}
+
+\begin{figure}[htp]
+ \centering
+\subfigure
+ {\includegraphics[width=0.36\textwidth]{MAP_GainLowPoint_disk-2_RunRUNNUMBER.png}}
+\subfigure
+ {\includegraphics[width=0.36\textwidth]{MAP_GainLowPoint_disk-1_RunRUNNUMBER.png}}
+\subfigure
+ {\includegraphics[width=0.36\textwidth]{MAP_GainLowPoint_disk+1_RunRUNNUMBER.png}}
+\subfigure
+ {\includegraphics[width=0.36\textwidth]{MAP_GainLowPoint_disk+2_RunRUNNUMBER.png}}
+\caption{2D Maps of the mean lowest fitted VCAL value per module for the 4 endcap disks (from top left to bottom right: disk-2 , disk-1 , disk+1 , disk+2 )}
+\end{figure}
+
+
+\pagebreak
+
+
+
+
+
+\subsection{Highest Fit point in VCAL}
+
+\begin{figure}[htp]
+ \centering
+\subfigure
+ {\includegraphics[width=0.32\textwidth]{MAP_GainHighPoint_layer1_RunRUNNUMBER.png}}
+\subfigure
+ {\includegraphics[width=0.32\textwidth]{MAP_GainHighPoint_layer2_RunRUNNUMBER.png}}
+\subfigure
+ {\includegraphics[width=0.32\textwidth]{MAP_GainHighPoint_layer2_RunRUNNUMBER.png}}
+\caption{2D Maps of the mean highest fitted VCAL value per module for the 3 barrel layers (left: layer 1 , center: layer 2 , right: layer 3)}
+\end{figure}
+
+\begin{figure}[htp]
+ \centering
+\subfigure
+ {\includegraphics[width=0.36\textwidth]{MAP_GainHighPoint_disk-2_RunRUNNUMBER.png}}
+\subfigure
+ {\includegraphics[width=0.36\textwidth]{MAP_GainHighPoint_disk-1_RunRUNNUMBER.png}}
+\subfigure
+ {\includegraphics[width=0.36\textwidth]{MAP_GainHighPoint_disk+1_RunRUNNUMBER.png}}
+\subfigure
+ {\includegraphics[width=0.36\textwidth]{MAP_GainHighPoint_disk+2_RunRUNNUMBER.png}}
+\caption{2D Maps of the mean highest fitted VCAL value per module for the 4 endcap disks (from top left to bottom right: disk-2 , disk-1 , disk+1 , disk+2 )}
+\end{figure}
+
+
+\pagebreak
+
+
+
+\subsection{Number of fitted points}
+
+\begin{figure}[htp]
+ \centering
+\subfigure
+ {\includegraphics[width=0.32\textwidth]{MAP_GainNPoints_layer1_RunRUNNUMBER.png}}
+\subfigure
+ {\includegraphics[width=0.32\textwidth]{MAP_GainNPoints_layer2_RunRUNNUMBER.png}}
+\subfigure
+ {\includegraphics[width=0.32\textwidth]{MAP_GainNPoints_layer2_RunRUNNUMBER.png}}
+\caption{2D Maps of the mean number of fitted points per module for the 3 barrel layers (left: layer 1 , center: layer 2 , right: layer 3)}
+\end{figure}
+
+\begin{figure}[htp]
+ \centering
+\subfigure
+ {\includegraphics[width=0.36\textwidth]{MAP_GainNPoints_disk-2_RunRUNNUMBER.png}}
+\subfigure
+ {\includegraphics[width=0.36\textwidth]{MAP_GainNPoints_disk-1_RunRUNNUMBER.png}}
+\subfigure
+ {\includegraphics[width=0.36\textwidth]{MAP_GainNPoints_disk+1_RunRUNNUMBER.png}}
+\subfigure
+ {\includegraphics[width=0.36\textwidth]{MAP_GainNPoints_disk+2_RunRUNNUMBER.png}}
+\caption{2D Maps of the mean number of fitted points per module for the 4 endcap disks (from top left to bottom right: disk-2 , disk-1 , disk+1 , disk+2 )}
+\end{figure}
+
+
+\pagebreak
+
+
+
+
+
+\subsection{Fit $\chi^2$/NDOF}
+
+\begin{figure}[htp]
+ \centering
+\subfigure
+ {\includegraphics[width=0.32\textwidth]{MAP_GainChi2NDF_layer1_RunRUNNUMBER.png}}
+\subfigure
+ {\includegraphics[width=0.32\textwidth]{MAP_GainChi2NDF_layer2_RunRUNNUMBER.png}}
+\subfigure
+ {\includegraphics[width=0.32\textwidth]{MAP_GainChi2NDF_layer2_RunRUNNUMBER.png}}
+\caption{2D Maps of the mean $\chi^2$/NDOF value per module for the 3 barrel layers (left: layer 1 , center: layer 2 , right: layer 3)}
+\end{figure}
+
+\begin{figure}[htp]
+ \centering
+\subfigure
+ {\includegraphics[width=0.36\textwidth]{MAP_GainChi2NDF_disk-2_RunRUNNUMBER.png}}
+\subfigure
+ {\includegraphics[width=0.36\textwidth]{MAP_GainChi2NDF_disk-1_RunRUNNUMBER.png}}
+\subfigure
+ {\includegraphics[width=0.36\textwidth]{MAP_GainChi2NDF_disk+1_RunRUNNUMBER.png}}
+\subfigure
+ {\includegraphics[width=0.36\textwidth]{MAP_GainChi2NDF_disk+2_RunRUNNUMBER.png}}
+\caption{2D Maps of the mean $\chi^2$/NDOF value per module for the 4 endcap disks (from top left to bottom right: disk-2 , disk-1 , disk+1 , disk+2 )}
+\end{figure}
+
+
+\pagebreak
+
+
+
+
+
+\subsection{Fit Probability}
+
+\begin{figure}[htp]
+ \centering
+\subfigure
+ {\includegraphics[width=0.32\textwidth]{MAP_GainChi2Prob_layer1_RunRUNNUMBER.png}}
+\subfigure
+ {\includegraphics[width=0.32\textwidth]{MAP_GainChi2Prob_layer2_RunRUNNUMBER.png}}
+\subfigure
+ {\includegraphics[width=0.32\textwidth]{MAP_GainChi2Prob_layer2_RunRUNNUMBER.png}}
+\caption{2D Maps of the mean probability value per module for the 3 barrel layers (left: layer 1 , center: layer 2 , right: layer 3)}
+\end{figure}
+
+\begin{figure}[htp]
+ \centering
+\subfigure
+ {\includegraphics[width=0.36\textwidth]{MAP_GainChi2Prob_disk-2_RunRUNNUMBER.png}}
+\subfigure
+ {\includegraphics[width=0.36\textwidth]{MAP_GainChi2Prob_disk-1_RunRUNNUMBER.png}}
+\subfigure
+ {\includegraphics[width=0.36\textwidth]{MAP_GainChi2Prob_disk+1_RunRUNNUMBER.png}}
+\subfigure
+ {\includegraphics[width=0.36\textwidth]{MAP_GainChi2Prob_disk+2_RunRUNNUMBER.png}}
+\caption{2D Maps of the mean probability value per module for the 4 endcap disks (from top left to bottom right: disk-2 , disk-1 , disk+1 , disk+2 )}
+\end{figure}
+
+
+\pagebreak
+
+
+
+
+
+
+
+
 \end{document}
 

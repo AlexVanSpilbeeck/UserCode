@@ -16,6 +16,8 @@
 #include "TObject.h"
 #include "TMean.cc"
 
+#include "PixelNameTranslator.cc"
+
 using namespace std;
 
 TString RunNumber = "_RunRUNNUMBER";
@@ -31,29 +33,49 @@ void write(TH2F*);
 void writeAllLevels(TH1F*,TH1F*,TH1F*,TString);
 int rocId(int, int);
 void getBarrelPos(TString& , int& , int& , int& );
+int  getDetId(TString);
 
+//Making PixNameTranslator object available from everywhere.
+PixelNameTranslator pix;
+  
+  
 class map_module_level{
   public:
   vector<TH2F> barrel;
+  vector<TH2F> endcap;
   
   map_module_level(TString name){
     barrel.assign(3,TH2F());
-    barrel[0] = TH2F(name+"_layer1" , name+"_layer1" , 9 , -4.5 , 4.5 , 21 , -10.5 , 10.5);
-    barrel[1] = TH2F(name+"_layer2" , name+"_layer2" , 9 , -4.5 , 4.5 , 33 , -16.5 , 16.5);
-    barrel[2] = TH2F(name+"_layer3" , name+"_layer3" , 9 , -4.5 , 4.5 , 45 , -22.5 , 22.5);
+    barrel[0] = TH2F(name+"_layer1" , name+"_layer1;module;ladder" , 9 , -4.5 , 4.5 , 21 , -10.5 , 10.5);
+    barrel[1] = TH2F(name+"_layer2" , name+"_layer2;module;ladder" , 9 , -4.5 , 4.5 , 33 , -16.5 , 16.5);
+    barrel[2] = TH2F(name+"_layer3" , name+"_layer3;module;ladder" , 9 , -4.5 , 4.5 , 45 , -22.5 , 22.5);
+    
+    endcap.assign(4,TH2F());
+    endcap[0] = TH2F(name+"_disk-2" , name+"_disk-2;2*blade+panel-1;plaquette" , 50, -24., 26., 4, 1., 5.);
+    endcap[1] = TH2F(name+"_disk-1" , name+"_disk-1;2*blade+panel-1;plaquette" , 50, -24., 26., 4, 1., 5.);
+    endcap[2] = TH2F(name+"_disk+1" , name+"_disk+1;2*blade+panel-1;plaquette" , 50, -24., 26., 4, 1., 5.);
+    endcap[3] = TH2F(name+"_disk+2" , name+"_disk+2;2*blade+panel-1;plaquette" , 50, -24., 26., 4, 1., 5.);
   }
   
-  void fill(TString& dirname, double val){
-    if(dirname.Contains("Barrel")){
-      int layer = 0, ladder = 0, module = 0;
-      getBarrelPos(dirname , layer , ladder , module);
+  void fill(int detid , TString& dirname , double val){
+    int layer = 0, ladder = 0, module = 0;
+    int disk = 0, blade = 0, panel = 0 , plaquette = 0 ;
+      
+    if(pix.detID2Bpix(detid , layer , ladder , module)){
       this->barrel[layer-1].Fill(module , ladder , val);
+      //cout << detid << "  " << layer << "  " << ladder << "  " << module << "  " << endl;
+    }
+    else if(pix.detID2Fpix(detid, disk, blade, panel, plaquette)){
+      if(disk>0) disk=disk-1;
+      this->endcap[disk+2].Fill(2*blade + panel -1 , plaquette , val);
     }
   }
   
   void Write(){
     for(unsigned i = 0 ; i < barrel.size() ; ++i)
       write(&(barrel[i]));
+    for(unsigned i = 0 ; i < endcap.size() ; ++i)
+      write(&(endcap[i]));
   }
   
   private:
@@ -67,6 +89,8 @@ class map_module_level{
 
 //******** MAIN FUNCTION ********
 void make_SummaryPlots(TString fname=""){
+
+  pix.init();
 
   gStyle->SetPalette(1);
  
@@ -289,6 +313,14 @@ void make_SummaryPlots(TString fname=""){
     
     int NX = Gain2d->GetNbinsX();
     int NY = Gain2d->GetNbinsY();
+    
+    int detid = getDetId(Gain2d->GetName());
+    cout << detid << endl;
+    int layer = 0, ladder = 0, module = 0;
+    pix.detID2Bpix(detid , layer , ladder , module);
+    cout << "    " << layer << "  " << ladder << "  " << module << endl;
+    getBarrelPos(dirlist[i] , layer , ladder , module);
+    cout << "    " << layer << "  " << ladder << "  " << module << endl;
     
    /* if(NModules==1 || NModules==100 || NModules==1000){
       output->cd();
@@ -520,18 +552,18 @@ void make_SummaryPlots(TString fname=""){
      SUM_GainLowPoint2d->SetBinContent(NModules,MGainLowPoint2d->GetMean());
      SUM_GainNPoints1d->SetBinContent(NModules,GainNPoints1d->GetMean());
           
-     MAP_Gain.fill(dirlist[i] , 	    MGain2d->GetMean());    
-     MAP_ErrorGain.fill(dirlist[i] , 	    MErrorGain2d->GetMean());		 
-     MAP_Pedestal.fill(dirlist[i] , 	    MPedestal2d->GetMean());		 
-     MAP_ErrorPedestal.fill(dirlist[i] ,    MErrorPedestal2d->GetMean());   
-     MAP_GainSaturate.fill(dirlist[i] ,     MGainSaturate2d->GetMean());      
-     MAP_GainDynamicRange.fill(dirlist[i] , MGainDynamicRange2d->GetMean());
-     MAP_GainFitResult.fill(dirlist[i] ,    MGainFitResult2d->GetMean());    
-     MAP_GainChi2NDF.fill(dirlist[i] , 	    MGainChi2NDF2d->GetMean());     
-     MAP_GainChi2Prob.fill(dirlist[i] ,     MGainChi2Prob2d->GetMean());      
-     MAP_GainHighPoint.fill(dirlist[i] ,    MGainHighPoint2d->GetMean());    
-     MAP_GainLowPoint.fill(dirlist[i] ,     MGainLowPoint2d->GetMean());   
-     MAP_GainNPoints.fill(dirlist[i] ,      GainNPoints1d->GetMean());     
+     MAP_Gain			.fill(detid , dirlist[i] , MGain2d->GetMean());    
+     MAP_ErrorGain		.fill(detid , dirlist[i] , MErrorGain2d->GetMean());		    
+     MAP_Pedestal		.fill(detid , dirlist[i] , MPedestal2d->GetMean());		     
+     MAP_ErrorPedestal		.fill(detid , dirlist[i] , MErrorPedestal2d->GetMean());   
+     MAP_GainSaturate		.fill(detid , dirlist[i] , MGainSaturate2d->GetMean());      
+     MAP_GainDynamicRange	.fill(detid , dirlist[i] , MGainDynamicRange2d->GetMean());
+     MAP_GainFitResult		.fill(detid , dirlist[i] , MGainFitResult2d->GetMean());    
+     MAP_GainChi2NDF		.fill(detid , dirlist[i] , MGainChi2NDF2d->GetMean());     
+     MAP_GainChi2Prob		.fill(detid , dirlist[i] , MGainChi2Prob2d->GetMean());      
+     MAP_GainHighPoint		.fill(detid , dirlist[i] , MGainHighPoint2d->GetMean());    
+     MAP_GainLowPoint		.fill(detid , dirlist[i] , MGainLowPoint2d->GetMean());   
+     MAP_GainNPoints		.fill(detid , dirlist[i] , GainNPoints1d->GetMean());	  
    
      if(TMath::Abs(MGain2d->GetMean())>20) cout<<"************  "<<MGain2d->GetMean()<<" mod "<<NModules<<"  "<<dirlist[i]<<endl;
      if(MPedestal2d->GetMean()==0) cout<<"=============="<<" mod "<<NModules<<dirlist[i]<<endl;
@@ -954,6 +986,11 @@ vector<TString> makedirlist(TFile* file,TString comparestring)
 
   return dirlist;
 
+}
+
+
+int getDetId(TString hname){
+  return hname.Remove(0,hname.Last('_')+1).Atoi();
 }
 
 
