@@ -119,6 +119,8 @@ wait_for_staging(){
   while [ $need_to_wait -eq 1 ];do
     need_to_wait=0
     for i in `seq 0 39`;do
+      if [ `$T2_LS $indir/$file|grep "No such File"|wc -l` -eq 1 ];then echo "File $file is not present in $indir ...";continue;fi  
+      stager_qry -M $indir/GainCalibration_${i}_$run.$ext
       file=$indir/GainCalibration_${i}_$run.$ext
       if [ `is_staged $file` -eq 0 ];then
         need_to_wait=1
