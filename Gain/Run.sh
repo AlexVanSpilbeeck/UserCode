@@ -102,7 +102,7 @@ make_file_list(){
   touch filelist.txt
   for i in `seq 0 39`;do
     file=GainCalibration_${i}_$run.$ext
-    if [ `$T2_LS $indir/$file|grep "No such File"|wc -l` -eq 1 ];then echo "File $file is not present in $indir ...";continue;fi #TOFIX --> -f doesn't work on castor
+    if [ `$T2_LS $indir/$file|grep "No such"|wc -l` -eq 1 ];then echo "File $file is not present in $indir ...";continue;fi #TOFIX --> -f doesn't work on castor
 
     echo "$indir/$file" > filelist.txt
     ./Run_offline_DQM.csh filelist.txt Calibration
@@ -119,7 +119,7 @@ wait_for_staging(){
   while [ $need_to_wait -eq 1 ];do
     need_to_wait=0
     for i in `seq 0 39`;do
-      if [ `$T2_LS $indir/$file|grep "No such File"|wc -l` -eq 1 ];then echo "File $file is not present in $indir ...";continue;fi  
+      if [ `$T2_LS $indir/$file|grep "No such"|wc -l` -eq 1 ];then echo "File $file is not present in $indir ...";continue;fi  
       stager_qry -M $indir/GainCalibration_${i}_$run.$ext
       file=$indir/GainCalibration_${i}_$run.$ext
       if [ `is_staged $file` -eq 0 ];then
