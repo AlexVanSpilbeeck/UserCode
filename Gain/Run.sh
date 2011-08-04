@@ -28,6 +28,7 @@ echo 'Usage :
 ./Run.sh -submit  RUNNUMBER : will launch the 40 calibration jobs
 ./Run.sh -hadd    RUNNUMBER : will hadd all 40 output files of the calib jobs into one file
 ./Run.sh -summary RUNNUMBER : will launch the summary job.
+./Run.sh -pdf     RUNNUMBER : will recompile the latex file to recreate the pdf summary.
 '
 exit
 
@@ -102,7 +103,7 @@ make_file_list(){
   touch filelist.txt
   for i in `seq 0 39`;do
     file=GainCalibration_${i}_$run.$ext
-    if [ `$T2_LS $indir/$file 2>&1|grep "No such"|wc -l` -eq 1 ];then echo "File $file is not present in $indir ...";continue;fi #TOFIX --> -f doesn't work on castor
+    if [ `$T2_LS $indir/$file|grep "No such File"|wc -l` -eq 1 ];then echo "File $file is not present in $indir ...";continue;fi #TOFIX --> -f doesn't work on castor
 
     echo "$indir/$file" > filelist.txt
     ./Run_offline_DQM.csh filelist.txt Calibration
@@ -120,8 +121,6 @@ wait_for_staging(){
     need_to_wait=0
     for i in `seq 0 39`;do
       file=$indir/GainCalibration_${i}_$run.$ext
-      if [ `$T2_LS $indir/$file 2>&1|grep "No such"|wc -l` -eq 1 ];then echo "File $file is not present in $indir ...";continue;fi  
-      stager_qry -M $indir/GainCalibration_${i}_$run.$ext
       if [ `is_staged $file` -eq 0 ];then
         need_to_wait=1
 	if [ $get_done -eq 1 ] ; then break ; fi
@@ -212,6 +211,7 @@ submit_summary(){
   cp -fr scripts/make_SummaryPlots.cc ${runningdir}/Summary_Run$run/make_SummaryPlots_template.cc
   cp -fr scripts/gain_summary.txt  ${runningdir}/Summary_Run$run/gain_summary_template.tex
   cp -fr scripts/TMean.* ${runningdir}/Summary_Run$run/.
+  cp -fr scripts/PixelNameTranslator.* ${runningdir}/Summary_Run$run/.
   
   cd $runningdir/Summary_Run$run
 
@@ -227,16 +227,38 @@ submit_summary(){
 
   rm -f gain_summary_final_run_$run.tex
   sed '/TOREPLACE/,$ d' < gain_summary.tex > gain_summary_final_run_$run.tex
-  cat Summary_RunRUNnumber.txt >> gain_summary_final_run_$run.tex
+  cat Summary_Run${run}number.txt >> gain_summary_final_run_$run.tex
   sed '1,/TOREPLACE/d'< gain_summary.tex >> gain_summary_final_run_$run.tex
 
   pdflatex gain_summary_final_run_$run.tex
+  pdflatex gain_summary_final_run_$run.tex
 }
+
+
+compile_pdf(){
+
+  cp -fr scripts/gain_summary.txt  ${runningdir}/Summary_Run$run/gain_summary_template.tex
+  cd $runningdir/Summary_Run$run
+  
+  rm -fr gain_summary.tex
+  sed "s#RUNNUMBER#$run#" < gain_summary_template.tex > gain_summary.tex
+
+  rm -f gain_summary_final_run_$run.tex
+  sed '/TOREPLACE/,$ d' < gain_summary.tex > gain_summary_final_run_$run.tex
+  cat Summary_Run${run}number.txt >> gain_summary_final_run_$run.tex
+  sed '1,/TOREPLACE/d'< gain_summary.tex >> gain_summary_final_run_$run.tex
+
+  pdflatex gain_summary_final_run_$run.tex
+  pdflatex gain_summary_final_run_$run.tex
+}
+
+
 
 create=0
 submit=0
 hadd=0
 summary=0
+pdf=0
 verbose=0
 
 if [ $# -eq 0 ] ; then usage ; fi
@@ -245,7 +267,8 @@ for arg in $* ; do
     -create)       create=1   ; run=$2 ; indir=$3 ; storedir=$4 ; shift ; shift ; shift ; shift ;;
     -submit)       submit=1   ; run=$2 ; shift ;;
     -hadd)         hadd=1     ; run=$2 ; shift ;;
-    -summary) summary=1  ; run=$2 ; shift ;;
+    -summary)      summary=1  ; run=$2 ; shift ;;
+    -pdf)          pdf=1      ; run=$2 ; shift ;;
     -v)            verbose=1  ; shift ;;
     -help)         usage ;;
     *)             ;;
@@ -274,6 +297,12 @@ fi
 if [ $summary -eq 1 ];then
   read_config
   submit_summary
+fi
+
+
+if [ $pdf -eq 1 ];then
+  read_config
+  compile_pdf
 fi
 
 
