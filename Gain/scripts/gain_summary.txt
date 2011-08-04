@@ -1,0 +1,246 @@
+
+\documentclass[a4paper,10pt]{article}
+
+%\textwidth=19.3cm
+\usepackage{color,graphicx,subfigure}
+\usepackage{fullpage}
+\linespread{1.5} 
+%\usepackage{lineno}
+%\usepackage{fancyhdr}
+%\pagestyle{fancy}
+%\headheight=12pt
+\usepackage[left=2cm,top=1cm,right=2cm,bottom=1cm,nohead,nofoot]{geometry}
+
+\usepackage{hyperref}
+
+
+\begin{document}
+
+\tableofcontents
+
+\clearpage
+
+\section{Summary of Run RUNNUMBER}
+
+TOREPLACE
+
+\section{Summary plots\label{sec:summary}}
+
+The following plots are summary plots. There is one entry per module along the X-axis. They are not ordered the same way as for DQM. The Y-axis presents the mean of the considered variable for each of the modules.
+
+\begin{figure}[htp]
+ \centering
+  \includegraphics[width=0.55\textwidth]{SUM_Gain2d_RunRUNNUMBER.png}
+\caption{Gain}
+\end{figure}
+
+\begin{figure}[htp]
+ \centering
+  \includegraphics[width=0.55\textwidth]{SUM_Pedestal2d_RunRUNNUMBER.png}
+\caption{Pedestal}
+\end{figure}
+
+\begin{figure}[htp]
+ \centering
+  \includegraphics[width=0.65\textwidth]{SUM_ErrorGain2d_RunRUNNUMBER.png}
+\caption{Error on 1/Gain}
+
+\end{figure}
+\begin{figure}[htp]
+ \centering
+  \includegraphics[width=0.65\textwidth]{SUM_ErrorPedestal2d_RunRUNNUMBER.png}
+\caption{Error on Pedestal}
+
+\end{figure}
+\begin{figure}[htp]
+ \centering
+  \includegraphics[width=0.55\textwidth]{SUM_GainSaturate2d_RunRUNNUMBER.png}
+\caption{ADC value at which the gain curve saturates, ie value of the plateau.}
+\end{figure}
+
+\begin{figure}[htp]
+ \centering
+  \includegraphics[width=0.55\textwidth]{SUM_GainDynamicRange2d_RunRUNNUMBER.png}
+\caption{range in ADC of the fitted part of the gain curve.}
+\end{figure}
+
+\begin{figure}[htp]
+ \centering
+  \includegraphics[width=0.55\textwidth]{SUM_GainLowPoint2d_RunRUNNUMBER.png}
+\caption{Lowest point in vcal where the fit starts on the X-axis.}
+\end{figure}
+
+
+\begin{figure}[htp]
+ \centering
+  \includegraphics[width=0.55\textwidth]{SUM_GainHighPoint2d_RunRUNNUMBER.png}
+\caption{Highest point in vcal where the fit ends on the X-axis.}
+\end{figure}
+
+
+\begin{figure}[htp]
+ \centering
+  \includegraphics[width=0.55\textwidth]{SUM_GainNPoints1d_RunRUNNUMBER.png}
+\caption{Number of points used by the fit.}
+\end{figure}
+
+
+\begin{figure}[htp]
+ \centering
+  \includegraphics[width=0.55\textwidth]{SUM_GainChi2NDF2d_RunRUNNUMBER.png}
+\caption{$\chi^2$/NDOF of the fit.}
+\end{figure}
+
+
+\begin{figure}[htp]
+ \centering
+  \includegraphics[width=0.55\textwidth]{SUM_GainChi2Prob2d_RunRUNNUMBER.png}
+\caption{Probability of the $\chi^2$.}
+\end{figure}
+
+\begin{figure}[htp]
+ \centering
+  \includegraphics[width=0.55\textwidth]{SUM_GainFitResult2d_RunRUNNUMBER.png}
+\caption{Status of the fit.}
+\end{figure}
+
+\pagebreak
+\clearpage
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+\section{Distributions per Pixel\label{sec:pixel}}
+
+The following plots have one entry per pixel. Left plots are for BPIX, right are for FPIX
+
+\subsection{Gain}
+
+\begin{figure}[htp]
+ \centering
+\subfigure
+ {\includegraphics[width=0.45\textwidth]{TOT_GainBPix_RunRUNNUMBER.png}}
+\subfigure
+ {\includegraphics[width=0.45\textwidth]{TOT_GainFPix_RunRUNNUMBER.png}}
+\caption{Gain distribution. One entry per pixel. Left : BPIX, Right : FPIX.}
+\end{figure}
+%\pagebreak
+
+
+
+\subsection{Pedestal}
+
+\begin{figure}[htp]
+ \centering
+\subfigure
+ {\includegraphics[width=0.45\textwidth]{TOT_PedestalBPix_RunRUNNUMBER.png}}
+\subfigure
+ {\includegraphics[width=0.45\textwidth]{TOT_PedestalFPix_RunRUNNUMBER.png}}
+\caption{Pedestal distribution. One entry per pixel. Left : BPIX, Right : FPIX.}
+\end{figure}
+\clearpage
+
+
+
+\subsection{Correlation gain-pedestal}
+
+\begin{figure}[ht]
+ \centering
+\subfigure
+ {\includegraphics[width=0.45\textwidth]{CorrelationGainPedBPix_RunRUNNUMBER.png}}
+\subfigure
+ {\includegraphics[width=0.45\textwidth]{CorrelationGainPedFPix_RunRUNNUMBER.png}}
+\caption{Gain on the X-axis, Pedestal on the Y-axis. One entry per pixel. Left : BPIX, Right : FPIX.}
+\end{figure}
+%\pagebreak
+
+
+
+\subsection{Error on 1/gain}
+
+\begin{figure}[htc]
+ \centering
+\subfigure
+ {\includegraphics[width=0.45\textwidth]{TOT_ErrorGainBPix_RunRUNNUMBER.png}}
+\subfigure
+ {\includegraphics[width=0.45\textwidth]{TOT_ErrorGainFPix_RunRUNNUMBER.png}}
+\caption{Fit error on 1/gain. One entry per pixel. Left : BPIX, Right : FPIX.}
+\end{figure}
+\clearpage
+
+
+
+\subsection{Error on pedestal}
+
+\begin{figure}[htp]
+ \centering
+\subfigure
+ {\includegraphics[width=0.45\textwidth]{TOT_ErrorPedestalBPix_RunRUNNUMBER.png}}
+\subfigure
+ {\includegraphics[width=0.45\textwidth]{TOT_ErrorPedestalFPix_RunRUNNUMBER.png}}
+\caption{Fit error on pedestal. One entry per pixel. Left : BPIX, Right : FPIX.}
+\end{figure}
+%\clearpage
+
+
+
+\subsection{correlation gain-error on 1/gain}
+
+\begin{figure}[htp]
+ \centering
+\subfigure
+ {\includegraphics[width=0.45\textwidth]{ErrorVsGainBPix_RunRUNNUMBER.png}}
+\subfigure
+ {\includegraphics[width=0.45\textwidth]{ErrorVsGainFPix_RunRUNNUMBER.png}}
+\caption{Gain on the X-axis, Fit error on 1/gain on the Y-axis. One entry per pixel. Left : BPIX, Right : FPIX.}
+\end{figure}
+\clearpage
+
+
+
+\subsection{correlation pedestal-error on pedestal}
+
+\begin{figure}[htp]
+ \centering
+\subfigure
+ {\includegraphics[width=0.45\textwidth]{ErrorVsPedestalBPix_RunRUNNUMBER.png}}
+\subfigure
+ {\includegraphics[width=0.45\textwidth]{ErrorVsPedestalFPix_RunRUNNUMBER.png}}
+\caption{Pedestal on the X-axis, Fit error on pedestal on the Y-axis. One entry per pixel. Left : BPIX, Right : FPIX.}
+\end{figure}
+%\pagebreak
+
+
+
+\subsection{correlation error on 1/gain - error on pedestal}
+
+\begin{figure}[htp]
+ \centering
+\subfigure
+ {\includegraphics[width=0.45\textwidth]{CorrelationErrorBPix_RunRUNNUMBER.png}}
+\subfigure
+ {\includegraphics[width=0.45\textwidth]{CorrelationErrorFPix_RunRUNNUMBER.png}}
+\caption{Fit error on 1/gain on the X-axis, Fit error on pedestal on the Y-axis. One entry per pixel. Left : BPIX, Right : FPIX.}
+\end{figure}
+%\clearpage
+
+
+
+
+
+
+\pagebreak
+
+
+\end{document}
+
