@@ -29,6 +29,7 @@ echo 'Usage :
 ./Run.sh -hadd    RUNNUMBER : will hadd all 40 output files of the calib jobs into one file
 ./Run.sh -summary RUNNUMBER : will launch the summary job.
 ./Run.sh -pdf     RUNNUMBER : will recompile the latex file to recreate the pdf summary.
+./Run.sh -compare RUNNUMBER1 FILE1 RUNNUMBER2 FILE2
 '
 exit
 
@@ -78,7 +79,7 @@ create(){
   make_dir ${runningdir}
 
   #cleaning
-  rm -f filelist.txt client_template_calib_cfg.py es.log
+  rm -f filelist.txt es.log
   
   #cleaning output dir
   set_specifics ${storedir}
@@ -95,7 +96,7 @@ create(){
 make_file_list(){
 
   #Copying template specific to gain calib to the general one used by Run_offline_DQM.csh
-  cp -f gaincalib_template_cfg.py client_template_calib_cfg.py
+  #cp -f gaincalib_template_cfg.py client_template_calib_cfg.py
 
   #if [ `is_on_castor $indir` -eq 1 ] ; then wait_for_staging ; fi
 
@@ -255,13 +256,58 @@ compile_pdf(){
 }
 
 
+compare_runs(){
+
+  #echo t $run1 t $file1 t $run2 t $file2
+
+  if [ $run1 == 0 ] || [ $run2 == 0 ] || [ $file1 == "" ] || [ $file2 == "" ];then usage ; fi
+
+  dir=Comp_${run1}-${run2}
+  make_dir $dir
+
+  set_specifics $file1
+  if [ `$T2_LS $file1 2>&1|grep "No such"|wc -l` -eq 1 ]; then
+    echo "File $file1 is not present ..."; exit ; fi ;
+  file1=${T2_FSYS}${file1}
+
+  set_specifics $file2
+  if [ `$T2_LS $file2 2>&1|grep "No such"|wc -l` -eq 1 ]; then
+    echo "File $file2 is not present ..."; exit ; fi ;
+  file2=${T2_FSYS}${file2}
+
+  cat scripts/make_ComparisonPlots.cc |\
+    sed "s#RUNNUMBER1#${run1}#" |\
+    sed "s#RUNNUMBER2#${run2}#" > $dir/make_ComparisonPlots.cc
+  
+  cp -fr scripts/TMean.* $dir/.
+  cp -fr scripts/PixelNameTranslator.* $dir/.
+  
+  cd $dir
+  
+  echo "( root -l -b -q make_ComparisonPlots.cc+\"(\"$file1\",\"$file2\")\" )"
+  root -l -b -q make_ComparisonPlots.cc+"(\"$file1\",\"$file2\")"
+
+}
+
+
+
+
+
+
 
 create=0
 submit=0
 hadd=0
 summary=0
 pdf=0
+compare=0
 verbose=0
+
+run1=0
+file1=""
+run2=0
+file2=""
+
 
 if [ $# -eq 0 ] ; then usage ; fi
 for arg in $* ; do
@@ -271,6 +317,7 @@ for arg in $* ; do
     -hadd)         hadd=1     ; run=$2 ; shift ;;
     -summary)      summary=1  ; run=$2 ; shift ;;
     -pdf)          pdf=1      ; run=$2 ; shift ;;
+    -compare)      compare=1  ; run=0 ; run1=$2 ; file1=$3 ; run2=$4 ; file2=$5 ; shift ; shift ; shift ; shift ; shift ;;
     -v)            verbose=1  ; shift ;;
     -help)         usage ;;
     *)             ;;
@@ -305,6 +352,12 @@ fi
 if [ $pdf -eq 1 ];then
   read_config
   compile_pdf
+fi
+
+
+if [ $compare -eq 1 ];then
+  echo "doing comparisons"
+  compare_runs
 fi
 
 
