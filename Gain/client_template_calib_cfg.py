@@ -72,7 +72,7 @@ process.load("CalibTracker.SiPixelGainCalibration.SiPixelGainCalibrationAnalysis
 process.siPixelGainCalibrationAnalysis.DetSetVectorSiPixelCalibDigiTag = 'siPixelCalibDigis'
 process.siPixelGainCalibrationAnalysis.saveFile = False
 process.siPixelGainCalibrationAnalysis.savePixelLevelHists = False
-process.siPixelGainCalibrationAnalysis.vcalHighToLowConversionFac=6.6
+process.siPixelGainCalibrationAnalysis.vcalHighToLowConversionFac=7
 process.siPixelGainCalibrationAnalysis.useVCALHIGH = True 
 
 process.load("DQMServices.Core.DQM_cfg")

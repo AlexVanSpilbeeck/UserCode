@@ -1,6 +1,6 @@
 #################
 #Queues
-q_lxplus=cmscaf1nd
+q_lxplus=cmscaf1nw
 q_T2=localgrid@cream01
 
 
@@ -35,7 +35,7 @@ set_castor_specifics(){
   T2_MKDIR='rfmkdir'
   T2_CHMOD='rfchmod'
   T2_FSYS='rfio://'
-  T2_TMP_DIR='/tmp/$USER/'
+  T2_TMP_DIR="/tmp/$USER/"
   if [ $verbose -eq 1 ] ; then echo "Setting castor specifics ..." ; fi
 }
 
@@ -49,6 +49,7 @@ set_local_specifics(){
   T2_TMP_DIR='/scratch/'
   if [ $verbose -eq 1 ] ; then echo "Setting local specifics ..." ; fi
 }
+
 set_specifics(){
   if [ $verbose -eq 1 ] ; then echo "Specifics for $1" ; fi
   if      [ `is_on_castor $1` -eq 1 ]; then set_castor_specifics ;
@@ -83,6 +84,12 @@ file_loc(){
   fi
 }
 
+is_file_present(){
+  if [ `$T2_LS $1 2>&1|grep "No such"|wc -l` -eq 1 ];then echo 0;
+  else echo 1;
+  fi
+}
+
 working_on_lxplus(){
   if [ `uname -a | grep lxplus | wc -l` -gt 0 ];then echo 1
   else echo 0
@@ -101,5 +108,40 @@ is_staged(){
       echo 0
     fi
   fi
+}
+
+stage_list_of_files(){
+
+  need_to_wait=0
+  for file in $@;do
+    if [ `is_on_castor $file` -eq 1 ];then
+      if [ `nsls $file 2>&1|grep "No such"|wc -l` -eq 1 ]; then
+        echo "$file is not present on /castor !!" ; continue ;
+      fi 
+    
+      if [ `is_staged $file` -eq 0 ];then
+        echo "File $file is being staged."
+        need_to_wait=1
+      fi
+    fi
+  done
+
+  if [ $need_to_wait -eq 1 ];then
+    echo "Waiting 5min before continuing !"
+    sleep 300
+    stage_list_of_files $@
+  fi
+  
+  echo "All files are finally staged ! Moving on ..."
+
+}
+
+stage_dir(){
+  if [ $# -ne 1 ];then echo "Takes as argument only 1 castor dir." ; exit ; fi
+  list=""
+  for file in `nsls $1`;do
+    list="$list $1/$file"  
+  done
+  stage_list_of_files $list
 }
 

@@ -162,13 +162,11 @@ if ( $opt_flag == "true" ) then
 	set iscastor = `echo $filename | grep -o /castor/cern.ch`
 	set isdata = `echo $filename | grep -o /store/data`
 	set calibtype = `echo $filename | grep -o -e "PixelAlive" -e "SCurve" -e "GainCalibration"`
-	set file_extension = `echo $filename | grep -o -e ".dmp" -e ".root" -e ".dat"`
+	set file_extension = `echo $filename | grep -o -e '\.dmp' -e '\.root' -e '\.dat'`
 	set endrun = `echo $filename | grep -o -e "_[0-9]\{2,\}\."`
 	set runnumber = `echo $endrun | grep -o -e ".*[^\.]"`
         set rundefault = "_default"
-	
-
-	
+		
 	if($calibtype == "PixelAlive" || $calibtype == "SCurve" || $calibtype == "GainCalibration") then
 	    set tagnumber = $calibtype$runnumber	    
 	else if ($calib_flag == "true") then
@@ -206,6 +204,7 @@ if ( $opt_flag == "true" ) then
 	cp temp_cfg.py Run_offline_DQM_${file_counter}_cfg.py
 	rm temp_cfg.py
 
+
 	if( $file_extension == ".dat" ) then
 	    echo ".dat files are not supported actively by this script, but a config file will be generated anyway"
 	    sed 's/DAT//' < Run_offline_DQM_${file_counter}_cfg.py > temp.xml
@@ -225,6 +224,7 @@ if ( $opt_flag == "true" ) then
 	    rm temp.xml
 
 	endif
+
 
 	if( $file_extension == ".dmp" ) then
 	    set source_type = PixelSLinkDataInputSource
