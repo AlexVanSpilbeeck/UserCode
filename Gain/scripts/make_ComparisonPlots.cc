@@ -1,6 +1,9 @@
 #include <iostream>
 #include <vector>
 #include <fstream>
+#include <iomanip>
+
+
 #include "TKey.h"
 #include "TFile.h"
 #include "TDirectory.h"
@@ -20,7 +23,7 @@
 
 using namespace std;
 
-TString RunNumber = "_RunRUNNUMBER";
+TString RunNumber = "_Run";
 bool PrintImages = true;
 bool PrintAllFormats = false;
 bool printSummary = true;
@@ -28,8 +31,8 @@ bool printTexSummary = true;
 
 //******** Declaration of fonctions ********
 vector<TString> makedirlist(TFile*,TString);
-void write(TH1F*);
-void write(TH2F*);
+void write(TH1F* , Bool_t = 0 , Bool_t = 0 , TString = "rmou"); // logY , largePad , optstatoption
+void write(TH2F* , Bool_t = 0);                                 // logZ
 void writeAllLevels(TH1F*,TH1F*,TH1F*,TString);
 int rocId(int, int);
 void getBarrelPos(TString& , int& , int& , int& );
@@ -44,30 +47,59 @@ class map_module_level{
   vector<TH2F> barrel;
   vector<TH2F> endcap;
   
-  map_module_level(TString name){
+  TH1F SUM_barrel;
+  TH1F SUM_endcap;
+  TH1F SUM_whole;
+  TH1F TOT_barrel;
+  TH1F TOT_endcap;
+  
+  TH1F SUB_whole;
+  vector<TMean> m_whole;
+  
+  map_module_level(TString name , int nbin = 10 , double xmin = 0 , double xmax = 10){
     barrel.assign(3,TH2F());
-    barrel[0] = TH2F(name+"_layer1" , name+"_layer1;module;ladder" , 9 , -4.5 , 4.5 , 21 , -10.5 , 10.5);
-    barrel[1] = TH2F(name+"_layer2" , name+"_layer2;module;ladder" , 9 , -4.5 , 4.5 , 33 , -16.5 , 16.5);
-    barrel[2] = TH2F(name+"_layer3" , name+"_layer3;module;ladder" , 9 , -4.5 , 4.5 , 45 , -22.5 , 22.5);
+    barrel[0] = TH2F("MAP_"+name+"_layer1" , name+"_layer1;module;ladder" , 9 , -4.5 , 4.5 , 21 , -10.5 , 10.5);
+    barrel[1] = TH2F("MAP_"+name+"_layer2" , name+"_layer2;module;ladder" , 9 , -4.5 , 4.5 , 33 , -16.5 , 16.5);
+    barrel[2] = TH2F("MAP_"+name+"_layer3" , name+"_layer3;module;ladder" , 9 , -4.5 , 4.5 , 45 , -22.5 , 22.5);
     
     endcap.assign(4,TH2F());
-    endcap[0] = TH2F(name+"_disk-2" , name+"_disk-2;2*blade+panel-1;plaquette" , 50, -24., 26., 4, 1., 5.);
-    endcap[1] = TH2F(name+"_disk-1" , name+"_disk-1;2*blade+panel-1;plaquette" , 50, -24., 26., 4, 1., 5.);
-    endcap[2] = TH2F(name+"_disk+1" , name+"_disk+1;2*blade+panel-1;plaquette" , 50, -24., 26., 4, 1., 5.);
-    endcap[3] = TH2F(name+"_disk+2" , name+"_disk+2;2*blade+panel-1;plaquette" , 50, -24., 26., 4, 1., 5.);
+    endcap[0] = TH2F("MAP_"+name+"_disk-2" , name+"_disk-2;2*blade+panel-1;plaquette" , 50, -24., 26., 4, 1., 5.);
+    endcap[1] = TH2F("MAP_"+name+"_disk-1" , name+"_disk-1;2*blade+panel-1;plaquette" , 50, -24., 26., 4, 1., 5.);
+    endcap[2] = TH2F("MAP_"+name+"_disk+1" , name+"_disk+1;2*blade+panel-1;plaquette" , 50, -24., 26., 4, 1., 5.);
+    endcap[3] = TH2F("MAP_"+name+"_disk+2" , name+"_disk+2;2*blade+panel-1;plaquette" , 50, -24., 26., 4, 1., 5.);
+    
+    SUM_barrel = TH1F("SUM_"+name+"_barrel" , "SUM_"+name+"_barrel;;mean per module VS ordered detid" , 900 , 0 , 900);
+    SUM_endcap = TH1F("SUM_"+name+"_endcap" , "SUM_"+name+"_endcap;;mean per module VS ordered detid" , 900 , 0 , 900);
+    SUM_whole  = TH1F("SUM_"+name+"_whole"  , "SUM_"+name+"_whole ;;mean per module VS ordered detid" , 1450, 0 , 1450);
+    
+    TOT_barrel = TH1F("TOT_"+name+"_barrel" , "TOT_"+name+"_barrel;module means;# modules" , nbin , xmin , xmax);
+    TOT_endcap = TH1F("TOT_"+name+"_endcap" , "TOT_"+name+"_endcap;module means;# modules" , nbin , xmin , xmax);
+    
+    SUB_whole  = TH1F("SUB_"+name+"_whole" , "SUB_"+name+"_whole;;mean per subdetectors" , 7 , 0 , 7);
+    m_whole.assign(7 , TMean());
+    
   }
   
   void fill(int detid , TString& dirname , double val){
     int layer = 0, ladder = 0, module = 0;
     int disk = 0, blade = 0, panel = 0 , plaquette = 0 ;
+    ostringstream detid_str(""); detid_str << detid;
+    
+    SUM_whole.Fill(detid_str.str().c_str() , val);
       
     if(pix.detID2Bpix(detid , layer , ladder , module)){
       this->barrel[layer-1].Fill(module , ladder , val);
+      SUM_barrel.Fill(detid_str.str().c_str() , val);
+      TOT_barrel.Fill(val);
+      m_whole[layer-1].Add(val);
       //cout << detid << "  " << layer << "  " << ladder << "  " << module << "  " << endl;
     }
     else if(pix.detID2Fpix(detid, disk, blade, panel, plaquette)){
       if(disk>0) disk=disk-1;
       this->endcap[disk+2].Fill(2*blade + panel -1 , plaquette , val);
+      SUM_endcap.Fill(detid_str.str().c_str() , val);
+      TOT_endcap.Fill(val);
+      m_whole[3+disk+2].Add(val);
     }
   }
   
@@ -76,6 +108,49 @@ class map_module_level{
       write(&(barrel[i]));
     for(unsigned i = 0 ; i < endcap.size() ; ++i)
       write(&(endcap[i]));
+    
+    
+    SUM_barrel.LabelsDeflate();
+    SUM_barrel.LabelsOption("a");
+    SUM_barrel.GetXaxis()->SetNdivisions(-1,0);
+    SUM_endcap.LabelsDeflate();
+    SUM_endcap.LabelsOption("a");
+    SUM_endcap.GetXaxis()->SetNdivisions(-1,0);
+    SUM_whole.LabelsDeflate();
+    SUM_whole.LabelsOption("a");
+    SUM_whole.GetXaxis()->SetNdivisions(-1,0);
+    SUM_barrel.GetXaxis()->SetTickLength(0);
+    SUM_endcap.GetXaxis()->SetTickLength(0);
+    SUM_whole.GetXaxis()->SetTickLength(0);
+    write(&SUM_barrel,0,0,"n");
+    write(&SUM_endcap,0,0,"n");
+    write(&SUM_whole,0,1,"n");
+    
+    write(&TOT_barrel , 1);
+    write(&TOT_endcap , 1);
+    
+    SUB_whole.Fill("layer 1" , m_whole[0].GetMean());
+    SUB_whole.Fill("layer 2" , m_whole[1].GetMean());
+    SUB_whole.Fill("layer 3" , m_whole[2].GetMean());
+    SUB_whole.Fill("disk -2" , m_whole[3].GetMean());
+    SUB_whole.Fill("disk -1" , m_whole[4].GetMean());
+    SUB_whole.Fill("disk +1" , m_whole[5].GetMean());
+    SUB_whole.Fill("disk +2" , m_whole[6].GetMean());
+    for(int i=0 ; i< 7 ; ++i)
+      SUB_whole.SetBinError( i + 1 , m_whole[i].GetRMS());
+    write(&SUB_whole,0,0,"n");
+    
+    
+  }
+  
+  void Divide(map_module_level& m){
+    for(int i = 0 ; i < this->barrel.size() ; ++i)
+      this->barrel[i].Divide(&(m.barrel[i]));
+    for(int i = 0 ; i < this->endcap.size() ; ++i)
+      this->endcap[i].Divide(&(m.endcap[i]));
+  
+    //not finished !!!
+  
   }
   
   private:
@@ -83,16 +158,37 @@ class map_module_level{
 };
 
 
+class pix_val{
+  public:
+  
+    Double_t gain , pedestal , err_gain , err_pedestal , plateau , dynamic_range , low_point , high_point , 
+                 chi2NDF , chi2_prob;
+    Int_t fit_result , npoints ;
+    
+};
 
 
 
 
 //******** MAIN FUNCTION ********
-void make_SummaryPlots(TString fname=""){
+void make_ComparisonPlots(TString fname="" , TString run="" , TString fname2="" , TString run2="" ){
+
+  Bool_t diff = 0;
+  
+  
+  RunNumber+=run;
 
   pix.init();
 
   gStyle->SetPalette(1);
+  
+  TFile* file2 = TFile::Open(fname2,"READ");
+  if(fname2 != "" && run2 != "") diff = 1;
+  if(diff) RunNumber+="-"+run2;
+  
+  
+  double frac_flag_high_gain = 5; //flag pixels when gain is higher than this
+  if(diff) frac_flag_high_gain = 1;
  
   TFile* file = TFile::Open(fname,"READ");
   file->cd();
@@ -103,12 +199,15 @@ void make_SummaryPlots(TString fname=""){
   TDirectory* dir;
   TList* list;
   
+  Double_t bmin = 999999999999 , bmax = 0 , fmin = 999999999999 , fmax = 0;
+  
   
   //*******************************
   //Declaration of histograms
   
   //gStyle->SetOptStat(0);
   
+  //----------------------------------------
   //From File
   TH2F* Gain2d = new TH2F();
   TH2F* ErrorGain2d = new TH2F();
@@ -123,6 +222,22 @@ void make_SummaryPlots(TString fname=""){
   TH2F* GainLowPoint2d = new TH2F();
   TH1F* GainNPoints1d = new TH1F();
   
+  //From Second File
+  TH2F* Gain2d_2 		= new TH2F();
+  TH2F* ErrorGain2d_2 		= new TH2F();
+  TH2F* Pedestal2d_2 		= new TH2F();
+  TH2F* ErrorPedestal2d_2 	= new TH2F();
+  TH2F* GainSaturate2d_2 	= new TH2F();
+  TH2F* GainDynamicRange2d_2	= new TH2F();
+  TH2F* GainFitResult2d_2 	= new TH2F();
+  TH2F* GainChi2NDF2d_2 	= new TH2F();
+  TH2F* GainChi2Prob2d_2 	= new TH2F();
+  TH2F* GainHighPoint2d_2 	= new TH2F();
+  TH2F* GainLowPoint2d_2 	= new TH2F();
+  TH1F* GainNPoints1d_2 	= new TH1F();
+  
+  
+  //----------------------------------------
   //Summaries
   double nmod = 1416;
   TH1F* SUM_Gain2d = new TH1F("SUM_Gain2d","SUM_Gain2d",(int)nmod,0.5,nmod+0.5);
@@ -138,72 +253,94 @@ void make_SummaryPlots(TString fname=""){
   TH1F* SUM_GainLowPoint2d = new TH1F("SUM_GainLowPoint2d","SUM_GainLowPoint2d",(int)nmod,0.5,nmod+0.5);
   TH1F* SUM_GainNPoints1d = new TH1F("SUM_GainNPoints1d","SUM_GainNPoints1d",(int)nmod,0.5,nmod+0.5);
   
+  
+  //----------------------------------------
+  //Binning
+  
+  int nbin_gain = 400 ; 	  double xmin_gain = 0 ,	  xmax_gain = 10;
+  int nbin_errgain = 400 ;	  double xmin_errgain = 0 ,	  xmax_errgain = 0.01;
+  int nbin_ped = 1000 ; 	  double xmin_ped = -100 ,	  xmax_ped = 150;
+  int nbin_errped = 1000 ;	  double xmin_errped = -1 ,	  xmax_errped = 1;
+  
+  if(diff){
+    nbin_gain = 400 ; 	  xmin_gain = -6 ;	xmax_gain = 6;
+    nbin_errgain = 400 ;  xmin_errgain = -0.1 ; xmax_errgain = 0.1;
+    nbin_ped = 1000 ; 	  xmin_ped = -50 ;	xmax_ped = 50;
+    nbin_errped = 1000 ;  xmin_errped = -10 ;	xmax_errped = 10;
+  }
+  
+  //----------------------------------------
   //Maps
-  map_module_level MAP_Gain("MAP_Gain");
-  map_module_level MAP_ErrorGain("MAP_ErrorGain");
-  map_module_level MAP_Pedestal("MAP_Pedestal");
-  map_module_level MAP_ErrorPedestal("MAP_ErrorPedestal");
-  map_module_level MAP_GainSaturate("MAP_GainSaturate");
-  map_module_level MAP_GainDynamicRange("MAP_GainDynamicRange");
-  map_module_level MAP_GainFitResult("MAP_GainFitResult");
-  map_module_level MAP_GainChi2NDF("MAP_GainChi2NDF");
-  map_module_level MAP_GainChi2Prob("MAP_GainChi2Prob");
-  map_module_level MAP_GainHighPoint("MAP_GainHighPoint");
-  map_module_level MAP_GainLowPoint("MAP_GainLowPoint");
-  map_module_level MAP_GainNPoints("MAP_GainNPoints");
+  map_module_level MAP_Gain("Gain" , 50 , xmin_gain , xmax_gain);
+  map_module_level MAP_ErrorGain("ErrorGain" , 50 , xmin_errgain , xmax_errgain);
+  map_module_level MAP_Pedestal("Pedestal" , 50 , xmin_ped , xmax_ped);
+  map_module_level MAP_ErrorPedestal("ErrorPedestal" , 50 , xmin_errped , xmax_errped);
+  map_module_level MAP_GainSaturate("GainSaturate" , 50 , -10 , 10);
+  map_module_level MAP_GainDynamicRange("GainDynamicRange" , 50 , -25 , 25);
+  map_module_level MAP_GainFitResult("GainFitResult" , 50 , -1 , 1);
+  map_module_level MAP_GainChi2NDF("GainChi2NDF" , 50 , -10 , 10);
+  map_module_level MAP_GainChi2Prob("GainChi2Prob" , 50 , -0.1 , 0.1);
+  map_module_level MAP_GainHighPoint("GainHighPoint" , 50 , -100 , 100);
+  map_module_level MAP_GainLowPoint("GainLowPoint" , 50 , -10 , 10);
+  map_module_level MAP_GainNPoints("GainNPoints" , 50 , -2 , 2);
+    
+  map_module_level MAP_frac_gain_high("frac_gain_high" , 100 , 0 , 1);
   
+  //----------------------------------------
   //Pixel Level
-  TH1F* TOT_Gain = new TH1F("TOT_Gain","TOT_Gain_PixelLevel;Gain;# pixels",400,0,10);
-  TH1F* TOT_ErrorGain = new TH1F("TOT_ErrorGain","TOT_ErrorGain_PixelLevel;Error on 1/Gain;# pixels",400,0,0.2);
-  TH1F* TOT_Pedestal = new TH1F("TOT_Pedestal","TOT_Pedestal_PixelLevel;Pedestal;# pixels",1000,-100,150);
-  TH1F* TOT_ErrorPedestal = new TH1F("TOT_ErrorPedestal","TOT_ErrorPedestal_PixelLevel;Error on Pedestal;# pixels",1000,0,20);
+  TH1F* TOT_Gain = new TH1F("TOT_Gain","TOT_Gain_PixelLevel;Gain;# pixels",nbin_gain,xmin_gain,xmax_gain);
+  TH1F* TOT_ErrorGain = new TH1F("TOT_ErrorGain","TOT_ErrorGain_PixelLevel;Error on 1/Gain;#pixels",nbin_errgain,xmin_errgain,xmax_errgain);
+  TH1F* TOT_Pedestal = new TH1F("TOT_Pedestal","TOT_Pedestal_PixelLevel;Pedestal;# pixels",nbin_ped,xmin_ped,xmax_ped);
+  TH1F* TOT_ErrorPedestal = new TH1F("TOT_ErrorPedestal","TOT_ErrorPedestal_PixelLevel;Error on Pedestal;# pixels",nbin_errped,xmin_errped,xmax_errped);
   
-  TH1F* TOT_GainBPix = new TH1F("TOT_GainBPix","TOT_GainBPix_PixelLevel;Gain;# pixels",400,0,10);
-  TH1F* TOT_ErrorGainBPix = new TH1F("TOT_ErrorGainBPix","TOT_ErrorGainBPix_PixelLevel;Error on 1/Gain;# pixels",400,0,0.2);
-  TH1F* TOT_PedestalBPix = new TH1F("TOT_PedestalBPix","TOT_PedestalBPix_PixelLevel;Pedestal;# pixels",350,-100,250);
-  TH1F* TOT_ErrorPedestalBPix = new TH1F("TOT_ErrorPedestalBPix","TOT_ErrorPedestalBPix_PixelLevel;Error on Pedestal;# pixels",500,0,20);
-  TH1F* TOT_GainFPix = new TH1F("TOT_GainFPix","TOT_GainFPix_PixelLevel;Gain;# pixels",400,0,10);
-  TH1F* TOT_ErrorGainFPix = new TH1F("TOT_ErrorGainFPix","TOT_ErrorGainFPix_PixelLevel;Error on 1/Gain;# pixels",400,0,0.2);
-  TH1F* TOT_PedestalFPix = new TH1F("TOT_PedestalFPix","TOT_PedestalFPix_PixelLevel;Pedestal;# pixels",350,-100,250);
-  TH1F* TOT_ErrorPedestalFPix = new TH1F("TOT_ErrorPedestalFPix","TOT_ErrorPedestalFPix_PixelLevel;Error on Pedestal;# pixels",500,0,20);
+  TH1F* TOT_GainBPix = new TH1F("TOT_GainBPix","TOT_GainBPix_PixelLevel;Gain;# pixels",nbin_gain,xmin_gain,xmax_gain);
+  TH1F* TOT_ErrorGainBPix = new TH1F("TOT_ErrorGainBPix","TOT_ErrorGainBPix_PixelLevel;Error on 1/Gain;# pixels",nbin_errgain,xmin_errgain,xmax_errgain);
+  TH1F* TOT_PedestalBPix = new TH1F("TOT_PedestalBPix","TOT_PedestalBPix_PixelLevel;Pedestal;# pixels",nbin_ped,xmin_ped,xmax_ped);
+  TH1F* TOT_ErrorPedestalBPix = new TH1F("TOT_ErrorPedestalBPix","TOT_ErrorPedestalBPix_PixelLevel;Error on Pedestal;# pixels",nbin_errped,xmin_errped,xmax_errped);
+  TH1F* TOT_GainFPix = new TH1F("TOT_GainFPix","TOT_GainFPix_PixelLevel;Gain;# pixels",nbin_gain,xmin_gain,xmax_gain);
+  TH1F* TOT_ErrorGainFPix = new TH1F("TOT_ErrorGainFPix","TOT_ErrorGainFPix_PixelLevel;Error on 1/Gain;# pixels",nbin_errgain,xmin_errgain,xmax_errgain);
+  TH1F* TOT_PedestalFPix = new TH1F("TOT_PedestalFPix","TOT_PedestalFPix_PixelLevel;Pedestal;# pixels",nbin_ped,xmin_ped,xmax_ped);
+  TH1F* TOT_ErrorPedestalFPix = new TH1F("TOT_ErrorPedestalFPix","TOT_ErrorPedestalFPix_PixelLevel;Error on Pedestal;# pixels",nbin_errped,xmin_errped,xmax_errped);
   
+  //----------------------------------------
   //Column Level
-  TH1F* TOT_GainPerCol = new TH1F("TOT_GainPerCol","TOT_Gain_ColumnLevel;Gain;# columns",400,0,10);
-  TH1F* TOT_PedestalPerCol = new TH1F("TOT_PedestalPerCol","TOT_Pedestal_ColumnLevel;Gain;# columns",350,-100,250);
+  TH1F* TOT_GainPerCol = new TH1F("TOT_GainPerCol","TOT_Gain_ColumnLevel;Gain;# columns",nbin_gain,xmin_gain,xmax_gain);
+  TH1F* TOT_PedestalPerCol = new TH1F("TOT_PedestalPerCol","TOT_Pedestal_ColumnLevel;Gain;# columns",nbin_ped,xmin_ped,xmax_ped);
   
-  TH1F* TOT_GainPerColBPix = new TH1F("TOT_GainPerColBPix","TOT_GainBPix_ColumnLevel;Gain;# columns",400,0,10);
-  TH1F* TOT_ErrorGainPerColBPix = new TH1F("TOT_ErrorGainPerColBPix","TOT_ErrorGainBPix_ColumnLevel;Error on 1/Gain;# columns",400,0,0.2);
-  TH1F* TOT_PedestalPerColBPix = new TH1F("TOT_PedestalPerColBPix","TOT_PedestalBPix_ColumnLevel;Pedestal;# columns",350,-100,250);
-  TH1F* TOT_ErrorPedestalPerColBPix = new TH1F("TOT_ErrorPedestalPerColBPix","TOT_ErrorPedestalBPix_ColumnLevel;Error on Pedestal;# columns",500,0,20);
-  TH1F* TOT_GainPerColFPix = new TH1F("TOT_GainPerColFPix","TOT_GainFPix_ColumnLevel;Gain;# columns",400,0,10);
-  TH1F* TOT_ErrorGainPerColFPix = new TH1F("TOT_ErrorGainPerColFPix","TOT_ErrorGainFPix_ColumnLevel;Error on 1/Gain;# columns",400,0,0.2);
-  TH1F* TOT_PedestalPerColFPix = new TH1F("TOT_PedestalPerColFPix","TOT_PedestalFPix_ColumnLevel;Pedestal;# columns",350,-100,250);
-  TH1F* TOT_ErrorPedestalPerColFPix = new TH1F("TOT_ErrorPedestalPerColFPix","TOT_ErrorPedestalFPix_ColumnLevel;Error on Pedestal;# columns",500,0,20);
+  TH1F* TOT_GainPerColBPix = new TH1F("TOT_GainPerColBPix","TOT_GainBPix_ColumnLevel;Gain;# columns",nbin_gain,xmin_gain,xmax_gain);
+  TH1F* TOT_ErrorGainPerColBPix = new TH1F("TOT_ErrorGainPerColBPix","TOT_ErrorGainBPix_ColumnLevel;Error on 1/Gain;# columns",nbin_errgain,xmin_errgain,xmax_errgain);
+  TH1F* TOT_PedestalPerColBPix = new TH1F("TOT_PedestalPerColBPix","TOT_PedestalBPix_ColumnLevel;Pedestal;# columns",nbin_ped,xmin_ped,xmax_ped);
+  TH1F* TOT_ErrorPedestalPerColBPix = new TH1F("TOT_ErrorPedestalPerColBPix","TOT_ErrorPedestalBPix_ColumnLevel;Error on Pedestal;# columns",nbin_errped,xmin_errped,xmax_errped);
+  TH1F* TOT_GainPerColFPix = new TH1F("TOT_GainPerColFPix","TOT_GainFPix_ColumnLevel;Gain;# columns",nbin_gain,xmin_gain,xmax_gain);
+  TH1F* TOT_ErrorGainPerColFPix = new TH1F("TOT_ErrorGainPerColFPix","TOT_ErrorGainFPix_ColumnLevel;Error on 1/Gain;# columns",nbin_errgain,xmin_errgain,xmax_errgain);
+  TH1F* TOT_PedestalPerColFPix = new TH1F("TOT_PedestalPerColFPix","TOT_PedestalFPix_ColumnLevel;Pedestal;# columns",nbin_ped,xmin_ped,xmax_ped);
+  TH1F* TOT_ErrorPedestalPerColFPix = new TH1F("TOT_ErrorPedestalPerColFPix","TOT_ErrorPedestalFPix_ColumnLevel;Error on Pedestal;# columns",nbin_errped,xmin_errped,xmax_errped);
   
+  //----------------------------------------
   //ROC Level
-  TH1F* TOT_GainPerROC = new TH1F("TOT_GainPerROC","TOT_Gain_ROCLevel;Gain;# ROC",400,0,10);
-  TH1F* TOT_PedestalPerROC = new TH1F("TOT_PedestalPerROC","TOT_Pedestal_ROCLevel;Gain;# ROC",350,-100,250);
+  TH1F* TOT_GainPerROC = new TH1F("TOT_GainPerROC","TOT_Gain_ROCLevel;Gain;# ROC",nbin_gain,xmin_gain,xmax_gain);
+  TH1F* TOT_PedestalPerROC = new TH1F("TOT_PedestalPerROC","TOT_Pedestal_ROCLevel;Gain;# ROC",nbin_ped,xmin_ped,xmax_ped);
   
-  TH1F* TOT_GainPerROCBPix = new TH1F("TOT_GainPerROCBPix","TOT_GainBPix_ROCLevel;Gain;# ROC",400,0,10);
-  TH1F* TOT_ErrorGainPerROCBPix = new TH1F("TOT_ErrorGainPerROCBPix","TOT_ErrorGainBPix_ROCLevel;Error on 1/Gain;# ROC",400,0,0.2);
-  TH1F* TOT_PedestalPerROCBPix = new TH1F("TOT_PedestalPerROCBPix","TOT_PedestalBPix_ROCLevel;Pedestal;# ROC",350,-100,250);
-  TH1F* TOT_ErrorPedestalPerROCBPix = new TH1F("TOT_ErrorPedestalPerROCBPix","TOT_ErrorPedestalBPix_ROCLevel;Error on Pedestal;# ROC",500,0,20);
-  TH1F* TOT_GainPerROCFPix = new TH1F("TOT_GainPerROCFPix","TOT_GainFPix_ROCLevel;Gain;# ROC",400,0,10);
-  TH1F* TOT_ErrorGainPerROCFPix = new TH1F("TOT_ErrorGainPerROCFPix","TOT_ErrorGainFPix_ROCLevel;Error on 1/Gain;# ROC",400,0,0.2);
-  TH1F* TOT_PedestalPerROCFPix = new TH1F("TOT_PedestalPerROCFPix","TOT_PedestalFPix_ROCLevel;Pedestal;# ROC",350,-100,250);
-  TH1F* TOT_ErrorPedestalPerROCFPix = new TH1F("TOT_ErrorPedestalPerROCFPix","TOT_ErrorPedestalFPix_ROCLevel;Error on Pedestal;# ROC",500,0,20);
+  TH1F* TOT_GainPerROCBPix = new TH1F("TOT_GainPerROCBPix","TOT_GainBPix_ROCLevel;Gain;# ROC",nbin_gain,xmin_gain,xmax_gain);
+  TH1F* TOT_ErrorGainPerROCBPix = new TH1F("TOT_ErrorGainPerROCBPix","TOT_ErrorGainBPix_ROCLevel;Error on 1/Gain;# ROC",nbin_errgain,xmin_errgain,xmax_errgain);
+  TH1F* TOT_PedestalPerROCBPix = new TH1F("TOT_PedestalPerROCBPix","TOT_PedestalBPix_ROCLevel;Pedestal;# ROC",nbin_ped,xmin_ped,xmax_ped);
+  TH1F* TOT_ErrorPedestalPerROCBPix = new TH1F("TOT_ErrorPedestalPerROCBPix","TOT_ErrorPedestalBPix_ROCLevel;Error on Pedestal;# ROC",nbin_errped,xmin_errped,xmax_errped);
+  TH1F* TOT_GainPerROCFPix = new TH1F("TOT_GainPerROCFPix","TOT_GainFPix_ROCLevel;Gain;# ROC",nbin_gain,xmin_gain,xmax_gain);
+  TH1F* TOT_ErrorGainPerROCFPix = new TH1F("TOT_ErrorGainPerROCFPix","TOT_ErrorGainFPix_ROCLevel;Error on 1/Gain;# ROC",nbin_errgain,xmin_errgain,xmax_errgain);
+  TH1F* TOT_PedestalPerROCFPix = new TH1F("TOT_PedestalPerROCFPix","TOT_PedestalFPix_ROCLevel;Pedestal;# ROC",nbin_ped,xmin_ped,xmax_ped);
+  TH1F* TOT_ErrorPedestalPerROCFPix = new TH1F("TOT_ErrorPedestalPerROCFPix","TOT_ErrorPedestalFPix_ROCLevel;Error on Pedestal;# ROC",nbin_errped,xmin_errped,xmax_errped);
   
-  TH2F* CorrelationGainPed = new TH2F("CorrelationGainPed","CorrelationGainPed;gain;pedestal",400,0,10,350,-100,250);
-  TH2F* CorrelationGainPedBPix = new TH2F("CorrelationGainPedBPix","CorrelationGainPedBPix;gain;pedestal",400,0,10,350,-100,250);
-  TH2F* CorrelationGainPedFPix = new TH2F("CorrelationGainPedFPix","CorrelationGainPedFPix;gain;pedestal",400,0,10,350,-100,250);
+  TH2F* CorrelationGainPed = new TH2F("CorrelationGainPed","CorrelationGainPed;gain;pedestal",nbin_gain,xmin_gain,xmax_gain,nbin_ped,xmin_ped,xmax_ped);
+  TH2F* CorrelationGainPedBPix = new TH2F("CorrelationGainPedBPix","CorrelationGainPedBPix;gain;pedestal",nbin_gain,xmin_gain,xmax_gain,nbin_ped,xmin_ped,xmax_ped);
+  TH2F* CorrelationGainPedFPix = new TH2F("CorrelationGainPedFPix","CorrelationGainPedFPix;gain;pedestal",nbin_gain,xmin_gain,xmax_gain,nbin_ped,xmin_ped,xmax_ped);
 
 
   //******** ERRORS **********
   
   //Pixel Level 
-  TH2F* CorrelationError = new TH2F("CorrelationError","CorrelationError;Error on 1/gain;Error on pedestal",100,0,1,200,0,100);
-  TH2F* ErrorVsGain = new TH2F("ErrorVsGain","ErrorVsGain;Gain;Error on 1/gain",400,0,10,100,0,1);
-  TH2F* ErrorVsPedestal = new TH2F("ErrorVsPedestal","ErrorVsPedestal;Pedestal;Error on pedestal",350,-100,250,200,0,100);
+  TH2F* CorrelationError = new TH2F("CorrelationError","CorrelationError;Error on 1/gain;Error on pedestal" , nbin_errgain , xmin_errgain , xmax_errgain , nbin_errped , xmin_errped , xmax_errped);
+  TH2F* ErrorVsGain = new TH2F("ErrorVsGain","ErrorVsGain;Gain;Error on 1/gain" , nbin_gain , xmin_gain , xmax_gain , nbin_errgain , xmin_errgain , xmax_errgain);
+  TH2F* ErrorVsPedestal = new TH2F("ErrorVsPedestal","ErrorVsPedestal;Pedestal;Error on pedestal", nbin_ped , xmin_ped , xmax_ped , nbin_errped , xmin_errped , xmax_errped);
   TH2F* CorrelationErrorBPix = new TH2F("CorrelationErrorBPix","CorrelationErrorBPix;Error on 1/gain;Error on pedestal",100,0,1,200,0,100);
   TH2F* ErrorVsGainBPix = new TH2F("ErrorVsGainBPix","ErrorVsGainBPix;Gain;Error on 1/gain",400,0,10,100,0,1);
   TH2F* ErrorVsPedestalBPix = new TH2F("ErrorVsPedestalBPix","ErrorVsPedestalBPix;Pedestal;Error on pedestal",350,-100,250,200,0,100);
@@ -273,7 +410,10 @@ void make_SummaryPlots(TString fname=""){
    //if(NModules==647  || NModules==648) continue;
     
    //cout<<NModules<<"  "<<dirlist[i]<<endl;
+   
+     //if(i>10) break;
     
+    //****************************************************************************************
     dir = file->GetDirectory(dirlist[i]); 
     list= dir->GetListOfKeys();
     for(int ikey=0;ikey<list->GetEntries();ikey++){
@@ -311,16 +451,78 @@ void make_SummaryPlots(TString fname=""){
       }
     }
     
+    //****************************************************************************************
+    TString dirname = dirlist[i];
+    
+    if(diff){
+      dirname.ReplaceAll("Run "+run,"Run "+run2);
+      dir = file2->GetDirectory(dirname);
+      if(dir==0){
+        cout << dirname << " was not found ..." << endl;
+        continue;
+      }
+      list= dir->GetListOfKeys();
+      for(int ikey=0;ikey<list->GetEntries();ikey++){
+        TKey *thekey = (TKey*)list->At(ikey);
+        if(thekey==0) continue;
+        TString keyname=thekey->GetName();
+        keyname.ReplaceAll(" ","");
+        TString keytype=thekey->GetClassName();
+        keytype.ReplaceAll(" ","");
+        
+        //Getting histo from file
+        if(keytype=="TH2F"){
+	if(keyname.Contains("Gain2d")) 			Gain2d_2             = (TH2F*) dir->Get(keyname);
+	if(keyname.Contains("ErrorGain2d")) 		ErrorGain2d_2        = (TH2F*) dir->Get(keyname);
+	if(keyname.Contains("Pedestal2d")) 		Pedestal2d_2         = (TH2F*) dir->Get(keyname);
+	if(keyname.Contains("ErrorPedestal2d"))		ErrorPedestal2d_2    = (TH2F*) dir->Get(keyname);
+	if(keyname.Contains("GainSaturate2d")) 		GainSaturate2d_2     = (TH2F*) dir->Get(keyname);
+	if(keyname.Contains("GainDynamicRange2d")) 	GainDynamicRange2d_2 = (TH2F*) dir->Get(keyname);
+	if(keyname.Contains("GainFitResult2d")) 	GainFitResult2d_2    = (TH2F*) dir->Get(keyname);
+	if(keyname.Contains("GainChi2NDF2d")) 		GainChi2NDF2d_2      = (TH2F*) dir->Get(keyname);
+	if(keyname.Contains("GainChi2Prob2d")) 		GainChi2Prob2d_2     = (TH2F*) dir->Get(keyname);
+	if(keyname.Contains("GainHighPoint2d")) 	GainHighPoint2d_2    = (TH2F*) dir->Get(keyname);
+	if(keyname.Contains("GainLowPoint2d")) 		GainLowPoint2d_2     = (TH2F*) dir->Get(keyname);
+
+        
+	/*if(keyname.Contains("344081672")){
+	  temp = new TH2F();
+	  temp = (TH2F*) dir->Get(keyname);
+	  histo2save->push_back(temp);
+	}*/
+        }
+        
+        if(keytype=="TH1F"){
+	if(keyname.Contains("GainNPoints1d")) 		GainNPoints1d_2      = (TH1F*) dir->Get(keyname);
+        }
+      }
+    }
+    
+    
     int NX = Gain2d->GetNbinsX();
     int NY = Gain2d->GetNbinsY();
     
     int detid = getDetId(Gain2d->GetName());
-    cout << detid << endl;
-    int layer = 0, ladder = 0, module = 0;
+    cout << "Module: " << detid << endl;
+    
+    if(dirname.Contains("Barrel")){
+      if(detid>bmax) bmax=detid;
+      if(detid<bmin) bmin=detid;
+    }
+    if(dirname.Contains("Endcap")){
+      if(detid>fmax) fmax=detid;
+      if(detid<fmin) fmin=detid;
+    }
+    
+    /*int layer = 0, ladder = 0, module = 0;
     pix.detID2Bpix(detid , layer , ladder , module);
     cout << "    " << layer << "  " << ladder << "  " << module << endl;
     getBarrelPos(dirlist[i] , layer , ladder , module);
     cout << "    " << layer << "  " << ladder << "  " << module << endl;
+    */
+    
+    pix_val pix;
+    
     
    /* if(NModules==1 || NModules==100 || NModules==1000){
       output->cd();
@@ -346,7 +548,9 @@ void make_SummaryPlots(TString fname=""){
     TMean* MGainChi2NDF2d      = new TMean();
     TMean* MGainChi2Prob2d     = new TMean();
     TMean* MGainHighPoint2d    = new TMean();
-    TMean* MGainLowPoint2d     = new TMean();    
+    TMean* MGainLowPoint2d     = new TMean();
+    
+    TMean* M_frac_gain_high    = new TMean();    
     
     double gainsperROC[16]={0};
     double errorgainsperROC[16]={0};
@@ -364,88 +568,123 @@ void make_SummaryPlots(TString fname=""){
       double npercol[2]={0};
       int changecol=0;
       
-      for(int ypix=1;ypix<=NY;ypix++)
-      {
+      for(int ypix=1;ypix<=NY;ypix++){
+      
 	      /*if(i==0 && Gain2d->GetBinContent(xpix,ypix)==0){
 	        test->Fill(Gain2d->GetBinContent(xpix,ypix));
 	        cout<<xpix<<"  "<<ypix<<"  "<<Gain2d->GetBinContent(xpix,ypix)<<endl;
 	      }*/
-	 if(ypix%80==0)
-	   changecol=1;
+	      
+	 if(ypix%80==0) changecol=1;
 	   
 	 Npix++;
 	 if(dirlist[i].Contains("Barrel")) NBpix++;
 	 if (dirlist[i].Contains("Endcap")) NFpix++;
+	 	
+	 pix.gain	   = Gain2d->GetBinContent(xpix,ypix)		  ;
+	 pix.err_gain	   = ErrorGain2d->GetBinContent(xpix,ypix)	  ; 
+	 pix.pedestal	   = Pedestal2d->GetBinContent(xpix,ypix)	  ; 
+	 pix.err_pedestal  = ErrorPedestal2d->GetBinContent(xpix,ypix)	  ;
+	 pix.plateau	   = GainSaturate2d->GetBinContent(xpix,ypix)	  ;
+	 pix.dynamic_range = GainDynamicRange2d->GetBinContent(xpix,ypix) ;
+	 pix.fit_result    = GainFitResult2d->GetBinContent(xpix,ypix)	  ;
+	 pix.chi2NDF	   = GainChi2NDF2d->GetBinContent(xpix,ypix)	  ;
+	 pix.chi2_prob	   = GainChi2Prob2d->GetBinContent(xpix,ypix)	  ;
+	 pix.high_point    = GainHighPoint2d->GetBinContent(xpix,ypix)	  ;
+	 pix.low_point	   = GainLowPoint2d->GetBinContent(xpix,ypix)	  ;
+	 
+	 if(diff){
+	   pix.gain	     -= Gain2d_2->GetBinContent(xpix,ypix);
+	   pix.err_gain	     -= ErrorGain2d_2->GetBinContent(xpix,ypix);
+	   pix.pedestal	     -= Pedestal2d_2->GetBinContent(xpix,ypix);
+	   pix.err_pedestal  -= ErrorPedestal2d_2->GetBinContent(xpix,ypix);
+	   pix.plateau       -= GainSaturate2d_2->GetBinContent(xpix,ypix);
+	   pix.dynamic_range -= GainDynamicRange2d_2->GetBinContent(xpix,ypix);
+	   pix.fit_result    -= GainFitResult2d_2->GetBinContent(xpix,ypix);
+	   pix.chi2NDF       -= GainChi2NDF2d_2->GetBinContent(xpix,ypix);
+	   pix.chi2_prob     -= GainChi2Prob2d_2->GetBinContent(xpix,ypix);
+	   pix.high_point    -= GainHighPoint2d_2->GetBinContent(xpix,ypix);
+	   pix.low_point     -= GainLowPoint2d_2->GetBinContent(xpix,ypix);
+         }
 	      
 	 if(GainFitResult2d->GetBinContent(xpix,ypix)>0){
+	   
+	   if(diff && GainFitResult2d_2->GetBinContent(xpix,ypix)<=0) continue;
+	   
+	   
+           if( fabs(pix.gain) > frac_flag_high_gain ) M_frac_gain_high->Add(1);
+	   else                                       M_frac_gain_high->Add(0);
+	   
+	   if(TMath::Abs(pix.gain)>30)
+	     cout << "      col,row " << xpix << "," << ypix <<
+	     " gain: "<< pix.gain << " ped: "<< pix.pedestal << endl;
+	   if(fabs(pix.gain) > 30)      continue;
+	   if(fabs(pix.pedestal) > 200) continue;
 	   
 	   NpixGoodFit++;
 	   if(dirlist[i].Contains("Barrel")) NBpixGoodFit++;
 	   if (dirlist[i].Contains("Endcap")) NFpixGoodFit++;
-	   
-	   if(TMath::Abs(Gain2d->GetBinContent(xpix,ypix))>30)
-	     cout<<"col,row "<<xpix<<","<<ypix<<" fitresult "<<GainFitResult2d->GetBinContent(xpix,ypix)<<" gain "<<Gain2d->GetBinContent(xpix,ypix)<<endl;
-	   
-	   if(TMath::Abs(Pedestal2d->GetBinContent(xpix,ypix))==0)
-	     cout<<"col,row "<<xpix<<","<<ypix<<" fitresult "<<GainFitResult2d->GetBinContent(xpix,ypix)<<" gain "<<Pedestal2d->GetBinContent(xpix,ypix)<<endl;
-	   
-	   
+	   	   	   
 	   npercol[changecol]++;
-	   gainspercol[changecol]+=Gain2d->GetBinContent(xpix,ypix);
-	   errorgainspercol[changecol]+=ErrorGain2d->GetBinContent(xpix,ypix);
-	   pedestalspercol[changecol]+=Pedestal2d->GetBinContent(xpix,ypix);
-	   errorpedestalspercol[changecol]+=ErrorPedestal2d->GetBinContent(xpix,ypix);
+	   gainspercol[changecol]		+=pix.gain;
+	   errorgainspercol[changecol]		+=pix.err_gain;
+	   pedestalspercol[changecol]		+=pix.pedestal;
+	   errorpedestalspercol[changecol]	+=pix.err_pedestal;
 	   
 	   nperROC[rocId(xpix-1,ypix-1)]++;
-	   gainsperROC[rocId(xpix-1,ypix-1)]+=Gain2d->GetBinContent(xpix,ypix);
-	   errorgainsperROC[rocId(xpix-1,ypix-1)]+=ErrorGain2d->GetBinContent(xpix,ypix);
-	   pedestalsperROC[rocId(xpix-1,ypix-1)]+=Pedestal2d->GetBinContent(xpix,ypix);
-	   errorpedestalsperROC[rocId(xpix-1,ypix-1)]+=ErrorPedestal2d->GetBinContent(xpix,ypix);
+	   gainsperROC[rocId(xpix-1,ypix-1)]		+=pix.gain;
+	   errorgainsperROC[rocId(xpix-1,ypix-1)]	+=pix.err_gain;
+	   pedestalsperROC[rocId(xpix-1,ypix-1)]	+=pix.pedestal;
+	   errorpedestalsperROC[rocId(xpix-1,ypix-1)]	+=pix.err_pedestal;
 	   
-	   MGain2d->Add(Gain2d->GetBinContent(xpix,ypix));
-	   MErrorGain2d->Add(ErrorGain2d->GetBinContent(xpix,ypix));
-	   MPedestal2d->Add(Pedestal2d->GetBinContent(xpix,ypix));
-	   MErrorPedestal2d->Add(ErrorPedestal2d->GetBinContent(xpix,ypix));
-	   MGainSaturate2d->Add(GainSaturate2d->GetBinContent(xpix,ypix));
-	   MGainDynamicRange2d->Add(GainDynamicRange2d->GetBinContent(xpix,ypix));
-	   MGainFitResult2d->Add(GainFitResult2d->GetBinContent(xpix,ypix));
-	   MGainChi2NDF2d->Add(GainChi2NDF2d->GetBinContent(xpix,ypix));
-	   MGainChi2Prob2d->Add(GainChi2Prob2d->GetBinContent(xpix,ypix));
-	   MGainHighPoint2d->Add(GainHighPoint2d->GetBinContent(xpix,ypix));
-	   MGainLowPoint2d->Add(GainLowPoint2d->GetBinContent(xpix,ypix));
-    
+	   MGain2d		->Add(pix.gain);
+	   MErrorGain2d		->Add(pix.err_gain);
+	   MPedestal2d		->Add(pix.pedestal);
+	   MErrorPedestal2d	->Add(pix.err_pedestal);
+	   MGainSaturate2d	->Add(pix.plateau);
+	   MGainDynamicRange2d	->Add(pix.dynamic_range);
+	   MGainFitResult2d	->Add(pix.fit_result);
+	   MGainChi2NDF2d	->Add(pix.chi2NDF);
+	   MGainChi2Prob2d	->Add(pix.chi2_prob);
+	   MGainHighPoint2d	->Add(pix.high_point);
+	   MGainLowPoint2d	->Add(pix.low_point);
+
+
 	   
-	   TOT_Gain->Fill(Gain2d->GetBinContent(xpix,ypix));
-	   TOT_ErrorGain->Fill(ErrorGain2d->GetBinContent(xpix,ypix));
-	   TOT_Pedestal->Fill(Pedestal2d->GetBinContent(xpix,ypix));
-	   TOT_ErrorPedestal->Fill(ErrorPedestal2d->GetBinContent(xpix,ypix));
+	   TOT_Gain->Fill(pix.gain);
+	   TOT_ErrorGain->Fill(pix.err_gain);
+	   TOT_Pedestal->Fill(pix.pedestal);
+	   TOT_ErrorPedestal->Fill(pix.err_pedestal);
 	   
-	   CorrelationError->Fill(ErrorGain2d->GetBinContent(xpix,ypix),ErrorPedestal2d->GetBinContent(xpix,ypix));
-	   ErrorVsGain->Fill(Gain2d->GetBinContent(xpix,ypix),ErrorGain2d->GetBinContent(xpix,ypix));
-	   ErrorVsPedestal->Fill(Pedestal2d->GetBinContent(xpix,ypix),ErrorPedestal2d->GetBinContent(xpix,ypix));
-	   CorrelationGainPed->Fill(Gain2d->GetBinContent(xpix,ypix),Pedestal2d->GetBinContent(xpix,ypix));
+	   CorrelationError->Fill(pix.err_gain , pix.err_pedestal);
+	   ErrorVsGain->Fill(pix.gain , pix.err_gain);
+	   ErrorVsPedestal->Fill(pix.pedestal , pix.err_pedestal);
+	   CorrelationGainPed->Fill(pix.gain , pix.pedestal);
 	   
 	   if(dirlist[i].Contains("Barrel")){
-	     TOT_GainBPix->Fill(Gain2d->GetBinContent(xpix,ypix));
-	     TOT_ErrorGainBPix->Fill(ErrorGain2d->GetBinContent(xpix,ypix));
-	     TOT_PedestalBPix->Fill(Pedestal2d->GetBinContent(xpix,ypix));
-	     TOT_ErrorPedestalBPix->Fill(ErrorPedestal2d->GetBinContent(xpix,ypix));
+	     TOT_GainBPix->Fill(pix.gain);
+	     TOT_ErrorGainBPix->Fill(pix.err_gain);
+	     TOT_PedestalBPix->Fill(pix.pedestal);
+	     TOT_ErrorPedestalBPix->Fill(pix.err_pedestal);
 	     
-	     CorrelationGainPedBPix->Fill(Gain2d->GetBinContent(xpix,ypix),Pedestal2d->GetBinContent(xpix,ypix));
-	     CorrelationErrorBPix->Fill(ErrorGain2d->GetBinContent(xpix,ypix),ErrorPedestal2d->GetBinContent(xpix,ypix));
-	     ErrorVsGainBPix->Fill(Gain2d->GetBinContent(xpix,ypix),ErrorGain2d->GetBinContent(xpix,ypix));
-	     ErrorVsPedestalBPix->Fill(Pedestal2d->GetBinContent(xpix,ypix),ErrorPedestal2d->GetBinContent(xpix,ypix));
+	     
+	     CorrelationErrorBPix->Fill(pix.err_gain , pix.err_pedestal);
+	     ErrorVsGainBPix->Fill(pix.gain , pix.err_gain);
+	     ErrorVsPedestalBPix->Fill(pix.pedestal , pix.err_pedestal);
+	     CorrelationGainPedBPix->Fill(pix.gain , pix.pedestal);
+	     
 	   }
 	   else if (dirlist[i].Contains("Endcap")) {
-	     TOT_GainFPix->Fill(Gain2d->GetBinContent(xpix,ypix));
-	     TOT_ErrorGainFPix->Fill(ErrorGain2d->GetBinContent(xpix,ypix));
-	     TOT_PedestalFPix->Fill(Pedestal2d->GetBinContent(xpix,ypix));
-	     TOT_ErrorPedestalFPix->Fill(ErrorPedestal2d->GetBinContent(xpix,ypix));
+	     TOT_GainFPix->Fill(pix.gain);
+	     TOT_ErrorGainFPix->Fill(pix.err_gain);
+	     TOT_PedestalFPix->Fill(pix.pedestal);
+	     TOT_ErrorPedestalFPix->Fill(pix.err_pedestal);
 	     
-	     CorrelationGainPedFPix->Fill(Gain2d->GetBinContent(xpix,ypix),Pedestal2d->GetBinContent(xpix,ypix));
-	     CorrelationErrorFPix->Fill(ErrorGain2d->GetBinContent(xpix,ypix),ErrorPedestal2d->GetBinContent(xpix,ypix));
-	     ErrorVsGainFPix->Fill(Gain2d->GetBinContent(xpix,ypix),ErrorGain2d->GetBinContent(xpix,ypix));
-	     ErrorVsPedestalFPix->Fill(Pedestal2d->GetBinContent(xpix,ypix),ErrorPedestal2d->GetBinContent(xpix,ypix));
+	     CorrelationErrorFPix->Fill(pix.err_gain , pix.err_pedestal);
+	     ErrorVsGainFPix->Fill(pix.gain , pix.err_gain);
+	     ErrorVsPedestalFPix->Fill(pix.pedestal , pix.err_pedestal);
+	     CorrelationGainPedFPix->Fill(pix.gain , pix.pedestal);
+	     
 	   }
          }
        }//end of loop over Y pixels
@@ -550,7 +789,8 @@ void make_SummaryPlots(TString fname=""){
      SUM_GainChi2Prob2d->SetBinContent(NModules,MGainChi2Prob2d->GetMean());
      SUM_GainHighPoint2d->SetBinContent(NModules,MGainHighPoint2d->GetMean());
      SUM_GainLowPoint2d->SetBinContent(NModules,MGainLowPoint2d->GetMean());
-     SUM_GainNPoints1d->SetBinContent(NModules,GainNPoints1d->GetMean());
+     if(diff == 0) SUM_GainNPoints1d->SetBinContent(NModules,GainNPoints1d->GetMean());
+     else          SUM_GainNPoints1d->SetBinContent(NModules,GainNPoints1d->GetMean() - GainNPoints1d_2->GetMean());
           
      MAP_Gain			.fill(detid , dirlist[i] , MGain2d->GetMean());    
      MAP_ErrorGain		.fill(detid , dirlist[i] , MErrorGain2d->GetMean());		    
@@ -562,11 +802,16 @@ void make_SummaryPlots(TString fname=""){
      MAP_GainChi2NDF		.fill(detid , dirlist[i] , MGainChi2NDF2d->GetMean());     
      MAP_GainChi2Prob		.fill(detid , dirlist[i] , MGainChi2Prob2d->GetMean());      
      MAP_GainHighPoint		.fill(detid , dirlist[i] , MGainHighPoint2d->GetMean());    
-     MAP_GainLowPoint		.fill(detid , dirlist[i] , MGainLowPoint2d->GetMean());   
-     MAP_GainNPoints		.fill(detid , dirlist[i] , GainNPoints1d->GetMean());	  
+     MAP_GainLowPoint		.fill(detid , dirlist[i] , MGainLowPoint2d->GetMean());
+     if(diff==0) MAP_GainNPoints.fill(detid , dirlist[i] , GainNPoints1d->GetMean());
+     else        MAP_GainNPoints.fill(detid , dirlist[i] , GainNPoints1d->GetMean() - GainNPoints1d_2->GetMean());	  
+   
+     MAP_frac_gain_high         .fill(detid , dirlist[i] , M_frac_gain_high->GetMean());
    
      if(TMath::Abs(MGain2d->GetMean())>20) cout<<"************  "<<MGain2d->GetMean()<<" mod "<<NModules<<"  "<<dirlist[i]<<endl;
      if(MPedestal2d->GetMean()==0) cout<<"=============="<<" mod "<<NModules<<dirlist[i]<<endl;
+     
+     cout << "   gain: " << MGain2d->GetMean() << "    pedestal: " << MPedestal2d->GetMean() << endl;
      
      delete MGain2d; 	    
      delete MErrorGain2d;	 
@@ -578,7 +823,8 @@ void make_SummaryPlots(TString fname=""){
      delete MGainChi2NDF2d;     
      delete MGainChi2Prob2d;     
      delete MGainHighPoint2d;    
-     delete MGainLowPoint2d;     
+     delete MGainLowPoint2d;
+     delete M_frac_gain_high;
 	      
    }//End of Loop over modules
    
@@ -586,7 +832,9 @@ void make_SummaryPlots(TString fname=""){
   
   
   //********* WRITING IN FILE ***************
-  TFile* output = new TFile("Summary"+RunNumber+".root","RECREATE");
+  cout << "Writing to file ..." << endl;
+  
+  TFile* output = new TFile("Comp"+RunNumber+".root","RECREATE");
   //output->cd();
   
  
@@ -594,43 +842,46 @@ void make_SummaryPlots(TString fname=""){
   
   //test->Write();
   
+  Bool_t   log = 0;
+  if(diff) log = 1;
+  
   //Pixel Level
-  write(TOT_Gain);
-  write(TOT_ErrorGain);
-  write(TOT_Pedestal);
-  write(TOT_ErrorPedestal);
-  write(TOT_GainBPix);
-  write(TOT_ErrorGainBPix);
-  write(TOT_PedestalBPix);
-  write(TOT_ErrorPedestalBPix);
-  write(TOT_GainFPix);
-  write(TOT_ErrorGainFPix);
-  write(TOT_PedestalFPix);
-  write(TOT_ErrorPedestalFPix);
+  write(TOT_Gain , log);
+  write(TOT_ErrorGain , log);
+  write(TOT_Pedestal , log);
+  write(TOT_ErrorPedestal , log);
+  write(TOT_GainBPix , log);
+  write(TOT_ErrorGainBPix , log);
+  write(TOT_PedestalBPix , log);
+  write(TOT_ErrorPedestalBPix , log);
+  write(TOT_GainFPix , log);
+  write(TOT_ErrorGainFPix , log);
+  write(TOT_PedestalFPix , log);
+  write(TOT_ErrorPedestalFPix , log);
   
   //Column Level
-  write(TOT_GainPerCol);
-  write(TOT_PedestalPerCol);
-  write(TOT_GainPerColBPix);
-  write(TOT_ErrorGainPerColBPix);
-  write(TOT_PedestalPerColBPix);
-  write(TOT_ErrorPedestalPerColBPix);
-  write(TOT_GainPerColFPix);
-  write(TOT_ErrorGainPerColFPix);
-  write(TOT_PedestalPerColFPix);
-  write(TOT_ErrorPedestalPerColFPix);
+  write(TOT_GainPerCol , log);
+  write(TOT_PedestalPerCol , log);
+  write(TOT_GainPerColBPix , log);
+  write(TOT_ErrorGainPerColBPix , log);
+  write(TOT_PedestalPerColBPix , log);
+  write(TOT_ErrorPedestalPerColBPix , log);
+  write(TOT_GainPerColFPix , log);
+  write(TOT_ErrorGainPerColFPix , log);
+  write(TOT_PedestalPerColFPix , log);
+  write(TOT_ErrorPedestalPerColFPix , log);
   
   //ROC Level
-  write(TOT_GainPerROC);
-  write(TOT_PedestalPerROC);
-  write(TOT_GainPerROCBPix);
-  write(TOT_ErrorGainPerROCBPix);
-  write(TOT_PedestalPerROCBPix);
-  write(TOT_ErrorPedestalPerROCBPix);
-  write(TOT_GainPerROCFPix);
-  write(TOT_ErrorGainPerROCFPix);
-  write(TOT_PedestalPerROCFPix);
-  write(TOT_ErrorPedestalPerROCFPix);
+  write(TOT_GainPerROC , log);
+  write(TOT_PedestalPerROC , log);
+  write(TOT_GainPerROCBPix , log);
+  write(TOT_ErrorGainPerROCBPix , log);
+  write(TOT_PedestalPerROCBPix , log);
+  write(TOT_ErrorPedestalPerROCBPix , log);
+  write(TOT_GainPerROCFPix , log);
+  write(TOT_ErrorGainPerROCFPix , log);
+  write(TOT_PedestalPerROCFPix , log);
+  write(TOT_ErrorPedestalPerROCFPix , log);
   
   //All levels
   writeAllLevels(TOT_GainBPix,TOT_GainPerColBPix,TOT_GainPerROCBPix,"TOT_GainAllLevelBPix");
@@ -712,6 +963,8 @@ void make_SummaryPlots(TString fname=""){
   MAP_GainLowPoint.Write();
   MAP_GainNPoints.Write();
   
+  MAP_frac_gain_high.Write();
+  
   //for(int i=0;i<histo2save->size();i++){;}
     //(histo2save[i]).Write();
     
@@ -740,11 +993,12 @@ void make_SummaryPlots(TString fname=""){
   ofstream texsummary;
   
   if(printSummary)
-    summary.open("Summary_RunRUNNUMBER.txt");
+    summary.open("Summary"+RunNumber+".txt");
   if(printTexSummary)
-    texsummary.open("texSummary_RunRUNNUMBER.tex");
+    texsummary.open("texSummary"+RunNumber+".tex");
     
   if(summary.is_open()){
+    cout << "Writing summary ... " << endl;
     summary<<"Looked @ "<<NModules<<" modules"<<endl;
     summary<<"Total number of pixels with good fit : "<<NpixGoodFit<<" over "<<Npix<<" -> "<<(double)NpixGoodFit/(double)Npix<<" %"<<endl;
     summary<<"In BPIX : "<<NBpixGoodFit<<" over "<<NBpix<<" -> "<<(double)NBpixGoodFit/(double)NBpix<<" %"<<endl;
@@ -765,37 +1019,29 @@ void make_SummaryPlots(TString fname=""){
   }
   
   if(texsummary.is_open()){
-    texsummary<<NModules<<endl;
-    texsummary<<NpixGoodFit<<endl;
-    texsummary<<Npix<<endl;
-    texsummary<<(double)NpixGoodFit/(double)Npix<<endl;
-    texsummary<<NBpixGoodFit<<endl;
-    texsummary<<NBpix<<endl;
-    texsummary<<(double)NBpixGoodFit/(double)NBpix<<endl;
-    texsummary<<NFpixGoodFit<<endl;
-    texsummary<<NFpix<<endl;
-    texsummary<<(double)NFpixGoodFit/(double)NFpix<<endl;
-    texsummary<<TOT_GainBPix->GetMean()<<endl;
-    texsummary<<TOT_GainBPix->GetRMS()<<endl;
-    texsummary<<TOT_GainFPix->GetMean()<<endl;
-    texsummary<<TOT_GainFPix->GetRMS()<<endl;
-    texsummary<<TOT_ErrorGainBPix->GetMean()<<endl;
-    texsummary<<TOT_ErrorGainBPix->GetRMS()<<endl;
-    texsummary<<TOT_ErrorGainFPix->GetMean()<<endl;
-    texsummary<<TOT_ErrorGainFPix->GetRMS()<<endl;
-    texsummary<<TOT_PedestalBPix->GetMean()<<endl;
-    texsummary<<TOT_PedestalBPix->GetRMS()<<endl;
-    texsummary<<TOT_PedestalFPix->GetMean()<<endl;
-    texsummary<<TOT_PedestalFPix->GetRMS()<<endl;
-    texsummary<<TOT_ErrorPedestalBPix->GetMean()<<endl;
-    texsummary<<TOT_ErrorPedestalBPix->GetRMS()<<endl;
-    texsummary<<TOT_ErrorPedestalFPix->GetMean()<<endl;
-    texsummary<<TOT_ErrorPedestalFPix->GetRMS()<<endl;
+    cout << "Writing tex summary ... " << endl;
+    texsummary<<"Looked @ "<<NModules<<" modules"<< " \\\\" << endl;
+    texsummary<<"Total number of pixels with good fit : "<<NpixGoodFit<<" over "<<Npix<<" $->$  "<<(double)NpixGoodFit/(double)Npix<<" \\%"<< " \\\\" << endl;
+    texsummary<<"In BPIX : "<<NBpixGoodFit<<" over "<<NBpix<<" $->$ "<<(double)NBpixGoodFit/(double)NBpix<<" \\%"<< " \\\\" << endl;
+    texsummary<<"In FPIX : "<<NFpixGoodFit<<" over "<<NFpix<<" $->$ "<<(double)NFpixGoodFit/(double)NFpix<<" \\%"<< " \\\\" << endl<< " \\\\" << endl;
+    texsummary<<"Gain Mean : "<< " \\\\" << endl;
+    texsummary<<"BPIX : "<<TOT_GainBPix->GetMean()<<" $\\pm$ "<<TOT_GainBPix->GetRMS()<< " \\\\" << endl;
+    texsummary<<"FPIX : "<<TOT_GainFPix->GetMean()<<" $\\pm$ "<<TOT_GainFPix->GetRMS()<< " \\\\" << endl;
+    texsummary<<"Gain Error Mean : "<< " \\\\" << endl;
+    texsummary<<"BPIX : "<<TOT_ErrorGainBPix->GetMean()<<" $\\pm$ "<<TOT_ErrorGainBPix->GetRMS()<< " \\\\" << endl;
+    texsummary<<"FPIX : "<<TOT_ErrorGainFPix->GetMean()<<" $\\pm$ "<<TOT_ErrorGainFPix->GetRMS()<< " \\\\" << endl<< " \\\\" << endl;
+    texsummary<<"Pedestal Mean : "<< " \\\\" << endl;
+    texsummary<<"BPIX : "<<TOT_PedestalBPix->GetMean()<<" $\\pm$ "<<TOT_PedestalBPix->GetRMS()<< " \\\\" << endl;
+    texsummary<<"FPIX : "<<TOT_PedestalFPix->GetMean()<<" $\\pm$ "<<TOT_PedestalFPix->GetRMS()<< " \\\\" << endl;
+    texsummary<<"Pedestal Error Mean : "<< " \\\\" << endl;
+    texsummary<<"BPIX : "<<TOT_ErrorPedestalBPix->GetMean()<<" $\\pm$ "<<TOT_ErrorPedestalBPix->GetRMS()<< " \\\\" << endl;
+    texsummary<<"FPIX : "<<TOT_ErrorPedestalFPix->GetMean()<<" $\\pm$ "<<TOT_ErrorPedestalFPix->GetRMS()<< " \\\\" << endl<< " \\\\" << endl;
     texsummary.close();
   }
   
   
-  
+  cout << setprecision(9) << "Barrel: " << bmin << " to " << bmax << endl;
+  cout << "Endcap: " << fmin << " to " << fmax << endl;
   
   
 	
@@ -814,11 +1060,17 @@ int rocId(int col, int row){
 }
 
 //write TH1F
-void write(TH1F* histo){
+void write(TH1F* histo , Bool_t logY , Bool_t largePad , TString statOptions){
   TString t=histo->GetName();
   t=t+RunNumber;
-  TCanvas* c1 = new TCanvas("c1","c1");
+  int canv_y = 500 ;
+  int canv_x = canv_y;
+  if(largePad) canv_x = 2 * canv_y;
+  TCanvas* c1 = new TCanvas("c1" , "c1" , canv_x , canv_y);
   c1->cd();
+  
+  if(logY) gPad->SetLogy(1);
+  gStyle->SetOptStat(statOptions);
   
   histo->Draw();
   histo->Write();
@@ -829,16 +1081,21 @@ void write(TH1F* histo){
       c1->Print(t+".root","root");
     }
   }
+  
+  delete c1;
 }
 
 //Write TH2F
-void write(TH2F* histo){
+void write(TH2F* histo , Bool_t logZ){
   TString t=histo->GetName();
   t=t+RunNumber;
   TCanvas* c1 = new TCanvas("c1","c1");
   c1->cd();
   
   gStyle->SetOptStat(0);
+  gPad->SetRightMargin(0.15);
+  if(logZ) gPad->SetLogz(1);
+  
   histo->Draw("colz");
   histo->Write();
   if(PrintImages){
@@ -848,6 +1105,7 @@ void write(TH2F* histo){
       c1->Print(t+".root","root");
     }
   }
+  delete c1;
 }
 
 //Write pixel, column and ROC level on same canvas

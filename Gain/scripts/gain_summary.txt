@@ -24,83 +24,189 @@
 
 TOREPLACE
 
-\section{Summary plots\label{sec:summary}}
+\clearpage
 
-The following plots are summary plots. There is one entry per module along the X-axis. They are not ordered the same way as for DQM. The Y-axis presents the mean of the considered variable for each of the modules.
+\section{Subdetector plots\label{sec:subdetector}}
 
 \begin{figure}[htp]
  \centering
-  \includegraphics[width=0.55\textwidth]{SUM_Gain2d_RunRUNNUMBER.png}
+\includegraphics[width=0.65\textwidth]{SUB_Gain_whole_RunRUNNUMBER.png}
 \caption{Gain}
 \end{figure}
 
+
 \begin{figure}[htp]
  \centering
-  \includegraphics[width=0.55\textwidth]{SUM_Pedestal2d_RunRUNNUMBER.png}
+\includegraphics[width=0.65\textwidth]{SUB_Pedestal_whole_RunRUNNUMBER.png}
 \caption{Pedestal}
 \end{figure}
 
+
 \begin{figure}[htp]
  \centering
-  \includegraphics[width=0.65\textwidth]{SUM_ErrorGain2d_RunRUNNUMBER.png}
+\includegraphics[width=0.65\textwidth]{SUB_ErrorGain_whole_RunRUNNUMBER.png}
 \caption{Error on 1/Gain}
-
 \end{figure}
+
+
 \begin{figure}[htp]
  \centering
-  \includegraphics[width=0.65\textwidth]{SUM_ErrorPedestal2d_RunRUNNUMBER.png}
-\caption{Error on Pedestal}
-
+\includegraphics[width=0.65\textwidth]{SUB_ErrorPedestal_whole_RunRUNNUMBER.png}
+\caption{Error on pedestal}
 \end{figure}
+
 \begin{figure}[htp]
  \centering
-  \includegraphics[width=0.55\textwidth]{SUM_GainSaturate2d_RunRUNNUMBER.png}
+  \includegraphics[width=0.65\textwidth]{SUB_frac_gain_high_whole_RunRUNNUMBER.png}
+\caption{Fraction of pixel in the module with gain higher than given normal threshold (5 for normal Summary , difference of 1
+for run comparisons).}
+\end{figure}
+
+\begin{figure}[htp]
+ \centering
+  \includegraphics[width=0.65\textwidth]{SUB_GainSaturate_whole_RunRUNNUMBER.png}
 \caption{ADC value at which the gain curve saturates, ie value of the plateau.}
 \end{figure}
 
 \begin{figure}[htp]
  \centering
-  \includegraphics[width=0.55\textwidth]{SUM_GainDynamicRange2d_RunRUNNUMBER.png}
+  \includegraphics[width=0.65\textwidth]{SUB_GainDynamicRange_whole_RunRUNNUMBER.png}
 \caption{range in ADC of the fitted part of the gain curve.}
 \end{figure}
 
 \begin{figure}[htp]
  \centering
-  \includegraphics[width=0.55\textwidth]{SUM_GainLowPoint2d_RunRUNNUMBER.png}
+  \includegraphics[width=0.65\textwidth]{SUB_GainLowPoint_whole_RunRUNNUMBER.png}
 \caption{Lowest point in vcal where the fit starts on the X-axis.}
 \end{figure}
 
 
 \begin{figure}[htp]
  \centering
-  \includegraphics[width=0.55\textwidth]{SUM_GainHighPoint2d_RunRUNNUMBER.png}
+  \includegraphics[width=0.65\textwidth]{SUB_GainHighPoint_whole_RunRUNNUMBER.png}
 \caption{Highest point in vcal where the fit ends on the X-axis.}
 \end{figure}
 
 
 \begin{figure}[htp]
  \centering
-  \includegraphics[width=0.55\textwidth]{SUM_GainNPoints1d_RunRUNNUMBER.png}
+  \includegraphics[width=0.65\textwidth]{SUB_GainNPoints_whole_RunRUNNUMBER.png}
 \caption{Number of points used by the fit.}
 \end{figure}
 
 
 \begin{figure}[htp]
  \centering
-  \includegraphics[width=0.55\textwidth]{SUM_GainChi2NDF2d_RunRUNNUMBER.png}
+  \includegraphics[width=0.65\textwidth]{SUB_GainChi2NDF_whole_RunRUNNUMBER.png}
 \caption{$\chi^2$/NDOF of the fit.}
 \end{figure}
 
 
 \begin{figure}[htp]
  \centering
-  \includegraphics[width=0.55\textwidth]{SUM_GainChi2Prob2d_RunRUNNUMBER.png}
+  \includegraphics[width=0.65\textwidth]{SUB_GainChi2Prob_whole_RunRUNNUMBER.png}
 \caption{Probability of the $\chi^2$.}
 \end{figure}
 
 \begin{figure}[htp]
  \centering
-  \includegraphics[width=0.55\textwidth]{SUM_GainFitResult2d_RunRUNNUMBER.png}
+  \includegraphics[width=0.65\textwidth]{SUB_GainFitResult_whole_RunRUNNUMBER.png}
+\caption{Status of the fit.}
+\end{figure}
+
+\clearpage
+\pagebreak
+
+
+
+
+\section{Summary plots\label{sec:summary}}
+
+The following plots are summary plots. There is one entry per module along the X-axis. They are not ordered the same way as for DQM. The Y-axis presents the mean of the considered variable for each of the modules.
+
+\begin{figure}[htp]
+ \centering
+\includegraphics[width=0.90\textwidth]{SUM_Gain_whole_RunRUNNUMBER.png}
+\caption{Gain}
+\end{figure}
+
+
+\begin{figure}[htp]
+ \centering
+\includegraphics[width=0.90\textwidth]{SUM_Pedestal_whole_RunRUNNUMBER.png}
+\caption{Pedestal}
+\end{figure}
+
+
+\begin{figure}[htp]
+ \centering
+\includegraphics[width=0.90\textwidth]{SUM_ErrorGain_whole_RunRUNNUMBER.png}
+\caption{Error on 1/Gain}
+\end{figure}
+
+
+\begin{figure}[htp]
+ \centering
+\includegraphics[width=0.90\textwidth]{SUM_ErrorPedestal_whole_RunRUNNUMBER.png}
+\caption{Error on pedestal}
+\end{figure}
+
+\begin{figure}[htp]
+ \centering
+  \includegraphics[width=0.90\textwidth]{SUM_frac_gain_high_whole_RunRUNNUMBER.png}
+\caption{Fraction of pixel in the module with gain higher than given normal threshold (5 for normal summary , difference of 1
+for run comparisons).}
+\end{figure}
+
+\begin{figure}[htp]
+ \centering
+  \includegraphics[width=0.90\textwidth]{SUM_GainSaturate_whole_RunRUNNUMBER.png}
+\caption{ADC value at which the gain curve saturates, ie value of the plateau.}
+\end{figure}
+
+\begin{figure}[htp]
+ \centering
+  \includegraphics[width=0.90\textwidth]{SUM_GainDynamicRange_whole_RunRUNNUMBER.png}
+\caption{range in ADC of the fitted part of the gain curve.}
+\end{figure}
+
+\begin{figure}[htp]
+ \centering
+  \includegraphics[width=0.90\textwidth]{SUM_GainLowPoint_whole_RunRUNNUMBER.png}
+\caption{Lowest point in vcal where the fit starts on the X-axis.}
+\end{figure}
+
+
+\begin{figure}[htp]
+ \centering
+  \includegraphics[width=0.90\textwidth]{SUM_GainHighPoint_whole_RunRUNNUMBER.png}
+\caption{Highest point in vcal where the fit ends on the X-axis.}
+\end{figure}
+
+
+\begin{figure}[htp]
+ \centering
+  \includegraphics[width=0.90\textwidth]{SUM_GainNPoints_whole_RunRUNNUMBER.png}
+\caption{Number of points used by the fit.}
+\end{figure}
+
+
+\begin{figure}[htp]
+ \centering
+  \includegraphics[width=0.90\textwidth]{SUM_GainChi2NDF_whole_RunRUNNUMBER.png}
+\caption{$\chi^2$/NDOF of the fit.}
+\end{figure}
+
+
+\begin{figure}[htp]
+ \centering
+  \includegraphics[width=0.90\textwidth]{SUM_GainChi2Prob_whole_RunRUNNUMBER.png}
+\caption{Probability of the $\chi^2$.}
+\end{figure}
+
+\begin{figure}[htp]
+ \centering
+  \includegraphics[width=0.90\textwidth]{SUM_GainFitResult_whole_RunRUNNUMBER.png}
 \caption{Status of the fit.}
 \end{figure}
 
@@ -305,6 +411,36 @@ The following plots have one entry per pixel. Left plots are for BPIX, right are
 
 
 
+\subsection{fraction of high gain}
+
+\begin{figure}[htp]
+ \centering
+\subfigure
+ {\includegraphics[width=0.32\textwidth]{MAP_frac_gain_high_layer1_RunRUNNUMBER.png}}
+\subfigure
+ {\includegraphics[width=0.32\textwidth]{MAP_frac_gain_high_layer2_RunRUNNUMBER.png}}
+\subfigure
+ {\includegraphics[width=0.32\textwidth]{MAP_frac_gain_high_layer2_RunRUNNUMBER.png}}
+\caption{2D Maps of the fraction of pixels with gain $>$ 5 (1 for comparison) per module for the 3 barrel layers (left: layer 1 , center: layer 2 , right: layer 3)}
+\end{figure}
+
+\begin{figure}[htp]
+ \centering
+\subfigure
+ {\includegraphics[width=0.36\textwidth]{MAP_frac_gain_high_disk-2_RunRUNNUMBER.png}}
+\subfigure
+ {\includegraphics[width=0.36\textwidth]{MAP_frac_gain_high_disk-1_RunRUNNUMBER.png}}
+\subfigure
+ {\includegraphics[width=0.36\textwidth]{MAP_frac_gain_high_disk+1_RunRUNNUMBER.png}}
+\subfigure
+ {\includegraphics[width=0.36\textwidth]{MAP_frac_gain_high_disk+2_RunRUNNUMBER.png}}
+\caption{2D Maps of the fraction of pixels with gain $>$ 5 (1 for comparison) per module for the 4 endcap disks (from top left to bottom right: disk-2 , disk-1 , disk+1 , disk+2 )}
+\end{figure}
+
+\pagebreak
+
+
+
 
 \subsection{Error on 1/gain}
 
@@ -362,6 +498,7 @@ The following plots have one entry per pixel. Left plots are for BPIX, right are
 \caption{2D Maps of the mean error of pedestal value per module for the 4 endcap disks (from top left to bottom right: disk-2 , disk-1 , disk+1 , disk+2 )}
 \end{figure}
 
+\pagebreak
 
 
 
