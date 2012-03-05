@@ -8,28 +8,41 @@
 #include "TString.h"
 #include "TH1.h"
 #include "TH2.h"
-#include "TF1.h");
+#include "TF1.h"
 #include "TLegend.h"
 #include "TList.h"
 #include "TStyle.h"
 #include "TObject.h"
+#include "TSystem.h"
 
+#include "header.h"
+
+int n_histo_max = 100;
+
+
+void getInfo(TString, int& , int& , int&);
 float getgainresult(TString, TFile*, TString, float*);
 
 Double_t mycurvefunc(Double_t *x, Double_t *par){
   return par[0]+ x[0]*par[1];  
 }
+
 void make_gaincurves(){
   
-  TFile *file = new TFile("DQM_V0001_Pixel_R000063033.root");
+  vector<int> n_histo_per_status(9,0) ;
+  int n_hist_tot = 0;
+  
+  //TFile *file = TFile::Open("rfio:///castor/cern.ch/user/r/rougny//GainRun_184644_2/GainRun_184644/0.root");
+  TFile *file = TFile::Open("rfio:///castor/cern.ch/user/r/rougny//GainRun_184644_3/GainRun_184644/GainCalibration.root");
+  //TFile *file = TFile::Open("/afs/cern.ch/user/r/rougny/gain/CMSSW_3_11_2/src/DQM/SiPixelCommon/test/Run_184644/test/DQM_V0001_Pixel_R000184644.root");
+  assert(file);
   file->cd();
   // make a loop over all plots
   TList *list = file->GetListOfKeys();
   gStyle->SetOptStat(0);
-  Int_t nkeys = file->GetNkeys();
+  //Int_t nkeys = file->GetNkeys();
   TDirectory *dir = file->GetDirectory("DQMData");
-  if(dir==0)
-    return;
+  assert(dir);
 
 
   TLatex CMSprelim(0.3,0.3,"CMS Preliminary");
@@ -44,100 +57,44 @@ void make_gaincurves(){
   std::vector<TString> dirlist;
   std::vector<TString> notdonelist;
   std::vector<int> nsubdirs;
-  TDirectory *dirsav = dir;
-  list = dir->GetListOfKeys();
-  int ikey=0;
-  int localkey=0;
-  int ntimes=0;
-
-  TCanvas *curvecanvas = new TCanvas();
-  for(ikey=0;ikey<list->GetEntries();  ikey++){
-    TKey *thekey = (TKey*)list->At(ikey);
-    if(thekey==0)
-      continue;
-      
-    TString keyname=thekey->GetName();
-    //keyname.ReplaceAll(" ","");
-    TString keytype=thekey->GetClassName();
-    keytype.ReplaceAll(" ","");
-    if(keyname=="EventInfo")
-      continue;
-    //    std::cout <<  keytype << " " << keyname << std::endl;
-    if(keytype=="TDirectoryFile"){
-      TString dirname=dir->GetPath();
-      dirname+="/";
-      dirname+=keyname;
-      //      std::cout << dirname << std::endl;
-      
-      dir=file->GetDirectory(dirname);
-      
-      list=dir->GetListOfKeys();
-      if(dirname.Contains(comparestring))
-	dirlist.push_back(dirname);
-      else{
-	notdonelist.push_back(dirname);
-	nsubdirs.push_back(-1);
-      }
-    }
-  }
   
-  int nempty=0;
-  while(nempty!=notdonelist.size()){
-    for(int idir=0; idir<notdonelist.size(); ++idir){
-      if(nsubdirs[idir]==0)
-	continue;
-      //std::cout << "now examining " << notdonelist[idir]<< " " << nsubdirs[idir] <<  std::endl;
-      dir = file->GetDirectory(notdonelist[idir]); 
-      //      std::cout << dir->GetName() << std::endl;
-      list= dir->GetListOfKeys(); 
-      //      std::cout << list->GetEntries() << std::endl;
-      int ndirectories=0;
-      for(ikey=0;ikey<list->GetEntries();  ikey++){
-	TKey *thekey = (TKey*)list->At(ikey);
-	if(thekey==0)
-	  continue;
-	TString keyname=thekey->GetName();
-	//keyname.ReplaceAll(" ","");
-	TString keytype=thekey->GetClassName();
-	keytype.ReplaceAll(" ","");
-	if(keytype=="TDirectoryFile"){
-	  TString dirname=dir->GetPath();
-	  dirname+="/";
-	  dirname+=keyname;
-	  //	  std::cout << dirname << std::endl;
-	  ndirectories++;
-	  if(dirname.Contains(comparestring))
-	    dirlist.push_back(dirname);
-	  else{
-	    notdonelist.push_back(dirname);
-	    nsubdirs.push_back(-1);
-	  }
-	}
-      }
-      nsubdirs[idir]=ndirectories;
-      // std::cout << "now done examining " << notdonelist[idir]<< " " << nsubdirs[idir] <<  std::endl;
-    }
-    // count number of done dirs;
-    nempty=0;
-    for(int i=0; i<nsubdirs.size(); i++){
-      if(nsubdirs[i]!=-1)
-	nempty++;
-    }
-  }
+  //TDirectory *dirsav = dir;
+  list = dir->GetListOfKeys();
+  
+  int ikey=0;
+
+  
+  dirlist = makedirlist(file , comparestring);
+  
   gStyle->SetOptStat(0);
+  gStyle->SetOptFit(0);
+  
   //int ncurves=0;
-  for(int i=0; i<dirlist.size() ; ++i){
-    //    std::cout << "good dir "  << dirlist[i] << std::endl;
-    // now count histograms:
+  for(unsigned i=0; i<dirlist.size() ; ++i){
     
     dir = file->GetDirectory(dirlist[i]); 
-    list= dir->GetListOfKeys(); 
-    //      std::cout << list->GetEntries() << std::endl;
+    list= dir->GetListOfKeys();
+    
+    PIX<TH2F*> h;
+    h.getFromDir(file , dirlist[i]);
+    
     for(ikey=0;ikey<list->GetEntries();  ikey++){
+    
+      //if(n_hist_tot > n_histo_per_status.size() * n_histo_max * 10) break;
+      if(n_histo_per_status[1] > 50 && n_histo_per_status[2] > 50 &&
+         n_histo_per_status[3] > 50 && n_histo_per_status[5] > 50 &&
+         n_histo_per_status[7] > 50 && n_histo_per_status[8] > 50 ) break;
+      
+      if ( (n_hist_tot % 100) == 0 ){
+        cout << " ++ n_histo_tot: " << n_hist_tot << "   nmod: " << i << endl << " ++ ";
+        for(unsigned k = 0 ; k < n_histo_per_status.size() ; ++k)
+	  cout << "st_" << k << ": " << n_histo_per_status[k] << "   ";
+	cout << endl;
+      }
+    
       //      std::cout << ikey << std::endl;
       TKey *thekey = (TKey*)list->At(ikey);
-      if(thekey==0)
-	continue;
+      if(thekey==0) continue;
       TString keyname=thekey->GetName();
       keyname.ReplaceAll(" ","");
       TString keytype=thekey->GetClassName();
@@ -147,60 +104,104 @@ void make_gaincurves(){
       if(keytype=="TH1F"){
 	//std::cout << keyname << std::endl;
 	if(keyname.Contains(curvestring)){
-	  //dir=file->GetDirectory(dirlist[i]);
+	  
+	  ++n_hist_tot;
+	  
+	  int mod=0;int row=0; int col=0;
+	  getInfo(keyname , mod , row , col);
+	  
+	  PIX<double> pix;
+	  pix.fill(h , col+1 , row+1);
+	  	  
+	  ++n_histo_per_status[fabs(pix.fit_result)];
+	  if(n_histo_per_status[fabs(pix.fit_result)] > n_histo_max) continue;
+	
+	  cout << "mod: " << mod << "  row,col: " << row << "," << col << "  gain,ped: " << pix.gain << "," << pix.pedestal
+	       << "  status: " << pix.fit_result << endl;
+	
 	  TH1F* temp = (TH1F*) dir->Get(keyname);
-	  //ncurves++;
-	  //std::cout << keyname << std::endl;
-	  //curvecanvas->cd();
-	  //curvecanvas->Clear();
-	  //dir=file->GetDirectory(dirlist[i]);
 	  dir->cd();
 	  TCanvas *curvecanvas1 = new TCanvas();
 	  curvecanvas1->cd();
-	  gStyle->SetOptStat(0);
-	  gStyle->SetOptFit(0);
 	  temp->SetMarkerSize(2.0); 
 	  temp->GetXaxis()->SetTitle("VCAL");
 	  temp->GetYaxis()->SetTitle("Average ADC response");
 	  temp->Draw(); 
-	  float gainandped[2];
-	  getgainresult(keyname,file, dirlist[i],gainandped);
-	  //std::cout << gainandped[0] << " " << gainandped[1] << std::endl;
-	  if(gainandped[0]>0.){
+	  
+	  
+	  
+	  if(pix.gain > 0.){
 	    TString funcname = keyname;
 	    funcname+="func";
-	    TF1 *func = new TF1(funcname,mycurvefunc,100,800,2);
+	    TF1 *func = new TF1(funcname,mycurvefunc,pix.low_point,pix.high_point,2);
 	    func->SetLineWidth(3);
-	    func->SetParameter(0,gainandped[1]);
-	    func->SetParameter(1,1./gainandped[0]);
+	    func->SetParameter(0,pix.pedestal);
+	    func->SetParameter(1,1./pix.gain);
 	    func->Draw("lsame");
+	    
+	    TF1* f2 = (TF1*) func->Clone("f_big_range");
+	    f2->SetRange(100,800);
+	    f2->SetLineStyle(2);
+	    f2->SetLineWidth(2);
+	    //f2->Draw("lsame");
+	    
 	    //CMSprelim.DrawText(10,10,"CMS Pixel");
 	    TLegend *legend = new TLegend(0.11,0.2,0.7,0.3);
 	    legend->SetFillStyle(0);
 	    legend->SetBorderSize(0);
 	    TString fitstring = " y = #frac{x}{";
-	    fitstring+= gainandped[0];
+	    fitstring+= pix.gain;
 	    fitstring+="} + " ;
-	    fitstring+= gainandped[1];
+	    fitstring+= pix.pedestal;
 	    
 	    legend->AddEntry(func,fitstring,"l");
 	    legend->Draw("same");
 	  }
 	  //curvecanvas->Update();
 	  //curvecanvas->Print(keyname+".jpg");
-	  curvecanvas1->Print(keyname+".eps");
+	  ostringstream fig_str("");
+	  fig_str << keyname << "_status_" << pix.fit_result << ".png";
+	  curvecanvas1->Print(fig_str.str().c_str());
 	  curvecanvas1->Close();
 	  delete curvecanvas1;
 	  delete temp;
 	}
-      }
-    }
-  }
+      } // end of if(TH1F)
+      
+
+    }//end of keylist loop
+    
+    h._delete();
+  } //end of dirlist loop
   //  for(int i=0; i<notdonelist.size();++i){
   //    std::cout << notdonelist[i] << std::endl;
   //  }
+  for(unsigned i=0 ; i < n_histo_per_status.size() ; ++i)
+    cout << "status " << i << " :  " << n_histo_per_status[i] << endl << endl;
 
+
+  gSystem->Exec("tar czf figs.bz.tar *.png");
+  gSystem->Exec("echo \"scp $USER@lxplus.cern.ch:`pwd`/figs.bz.tar .\"");
+  gSystem->Exec("echo \"tar xzf figs.bz.tar\"");
   
+}
+
+void getInfo(TString keyname , int& detid , int& row, int& col){
+  const char* strversiontemp = keyname;
+  std::string strversion = strversiontemp;
+  std::string cutstring[20];
+  unsigned foundunderscore=0;
+  for(int i=0; i<20 && foundunderscore<strversion.size(); i++){
+    int found=strversion.find("_",foundunderscore);
+    std::string thesubstr = strversion.substr(foundunderscore,found-foundunderscore);
+    //std::cout << thesubstr << " " << found << std::endl;
+    cutstring[i]=thesubstr;
+    foundunderscore=found+1;
+  }
+
+  row = atoi(cutstring[2].c_str());
+  col = atoi(cutstring[4].c_str());
+  detid = atoi(cutstring[6].c_str());
 }
 
 
@@ -210,7 +211,7 @@ float getgainresult(TString keyname, TFile *file, TString dirname, float *gainan
   const char* strversiontemp = keyname;
   std::string strversion = strversiontemp;
   std::string cutstring[20];
-  int foundunderscore=0;
+  unsigned foundunderscore=0;
   for(int i=0; i<20 && foundunderscore<strversion.size(); i++){
     int found=strversion.find("_",foundunderscore);
     std::string thesubstr = strversion.substr(foundunderscore,found-foundunderscore);
@@ -251,22 +252,5 @@ float getgainresult(TString keyname, TFile *file, TString dirname, float *gainan
   //gainandped[1]=pedval;
   return 1;
 }
-/*
-double getpedresult(TString keyname){
-  std::cout << "examining histo " << keyname << std::endl;
-  float result=0;
-  
-  
-  return result;
 
-}
 
-int getrow(std::string keyname){
-  
-  return 0;
-}
-
-int getcol(std::string keyname){
-  return 0;
-}
-*/

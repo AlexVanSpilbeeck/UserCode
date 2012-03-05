@@ -1,4 +1,7 @@
 
+
+
+
 \documentclass[a4paper,10pt]{article}
 
 %\textwidth=19.3cm
@@ -10,8 +13,17 @@
 %\pagestyle{fancy}
 %\headheight=12pt
 \usepackage[left=2cm,top=1cm,right=2cm,bottom=1cm,nohead,nofoot]{geometry}
-
 \usepackage{hyperref}
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%My own variables:
+\usepackage{ifthen}
+\def\DIFF{DIFF_TO_REPLACE}
+\ifthenelse{\DIFF = 1}{\def\high_gain_frac{0.5}}{\def\high_gain_frac{7}}
+
+
 
 
 \begin{document}
@@ -58,7 +70,7 @@ TOREPLACE
 \begin{figure}[htp]
  \centering
   \includegraphics[width=0.65\textwidth]{SUB_frac_gain_high_whole_RunRUNNUMBER.png}
-\caption{Fraction of pixel in the module with gain higher than given normal threshold (5 for normal Summary , difference of 1
+\caption{Fraction of pixel in the module with gain higher than given normal threshold (7 for normal Summary , difference of 0.5
 for run comparisons).}
 \end{figure}
 
@@ -154,7 +166,7 @@ The following plots are summary plots. There is one entry per module along the X
 \begin{figure}[htp]
  \centering
   \includegraphics[width=0.90\textwidth]{SUM_frac_gain_high_whole_RunRUNNUMBER.png}
-\caption{Fraction of pixel in the module with gain higher than given normal threshold (5 for normal summary , difference of 1
+\caption{Fraction of pixel in the module with gain higher than given normal threshold (7 for normal summary , difference of 1
 for run comparisons).}
 \end{figure}
 
@@ -341,11 +353,96 @@ The following plots have one entry per pixel. Left plots are for BPIX, right are
 %\clearpage
 
 
+\pagebreak
 
 
+
+
+
+
+
+
+
+\section{Distributions per columns\label{sec:col}}
+
+The following plots have one entry per column. Left plots are for BPIX, right are for FPIX
+
+\subsection{Gain}
+
+\begin{figure}[htp]
+ \centering
+\subfigure
+ {\includegraphics[width=0.45\textwidth]{TOT_GainPerColBPix_RunRUNNUMBER.png}}
+\subfigure
+ {\includegraphics[width=0.45\textwidth]{TOT_GainPerColFPix_RunRUNNUMBER.png}}
+\caption{Gain distribution. One entry per column. Left : BPIX, Right : FPIX.}
+\end{figure}
+%\pagebreak
+
+
+
+\subsection{Pedestal}
+
+\begin{figure}[htp]
+ \centering
+\subfigure
+ {\includegraphics[width=0.45\textwidth]{TOT_PedestalPerColBPix_RunRUNNUMBER.png}}
+\subfigure
+ {\includegraphics[width=0.45\textwidth]{TOT_PedestalPerColFPix_RunRUNNUMBER.png}}
+\caption{Pedestal distribution. One entry per column. Left : BPIX, Right : FPIX.}
+\end{figure}
+\clearpage
 
 
 \pagebreak
+
+
+
+
+
+
+\section{Distributions per ROCs\label{sec:ROC}}
+
+The following plots have one entry per ROC. Left plots are for BPIX, right are for FPIX
+
+\subsection{Gain}
+
+\begin{figure}[htp]
+ \centering
+\subfigure
+ {\includegraphics[width=0.45\textwidth]{TOT_GainPerROCBPix_RunRUNNUMBER.png}}
+\subfigure
+ {\includegraphics[width=0.45\textwidth]{TOT_GainPerROCFPix_RunRUNNUMBER.png}}
+\caption{Gain distribution. One entry per ROC. Left : BPIX, Right : FPIX.}
+\end{figure}
+%\pagebreak
+
+
+
+\subsection{Pedestal}
+
+\begin{figure}[htp]
+ \centering
+\subfigure
+ {\includegraphics[width=0.45\textwidth]{TOT_PedestalPerROCBPix_RunRUNNUMBER.png}}
+\subfigure
+ {\includegraphics[width=0.45\textwidth]{TOT_PedestalPerROCFPix_RunRUNNUMBER.png}}
+\caption{Pedestal distribution. One entry per ROC. Left : BPIX, Right : FPIX.}
+\end{figure}
+\clearpage
+
+
+\pagebreak
+
+
+
+
+
+
+
+
+
+
 
 
 \section{2D Maps\label{sec:maps}}
@@ -359,7 +456,7 @@ The following plots have one entry per pixel. Left plots are for BPIX, right are
 \subfigure
  {\includegraphics[width=0.32\textwidth]{MAP_Gain_layer2_RunRUNNUMBER.png}}
 \subfigure
- {\includegraphics[width=0.32\textwidth]{MAP_Gain_layer2_RunRUNNUMBER.png}}
+ {\includegraphics[width=0.32\textwidth]{MAP_Gain_layer3_RunRUNNUMBER.png}}
 \caption{2D Maps of the mean gain value per module for the 3 barrel layers (left: layer 1 , center: layer 2 , right: layer 3)}
 \end{figure}
 
@@ -389,7 +486,7 @@ The following plots have one entry per pixel. Left plots are for BPIX, right are
 \subfigure
  {\includegraphics[width=0.32\textwidth]{MAP_Pedestal_layer2_RunRUNNUMBER.png}}
 \subfigure
- {\includegraphics[width=0.32\textwidth]{MAP_Pedestal_layer2_RunRUNNUMBER.png}}
+ {\includegraphics[width=0.32\textwidth]{MAP_Pedestal_layer3_RunRUNNUMBER.png}}
 \caption{2D Maps of the mean pedestal value per module for the 3 barrel layers (left: layer 1 , center: layer 2 , right: layer 3)}
 \end{figure}
 
@@ -420,8 +517,8 @@ The following plots have one entry per pixel. Left plots are for BPIX, right are
 \subfigure
  {\includegraphics[width=0.32\textwidth]{MAP_frac_gain_high_layer2_RunRUNNUMBER.png}}
 \subfigure
- {\includegraphics[width=0.32\textwidth]{MAP_frac_gain_high_layer2_RunRUNNUMBER.png}}
-\caption{2D Maps of the fraction of pixels with gain $>$ 5 (1 for comparison) per module for the 3 barrel layers (left: layer 1 , center: layer 2 , right: layer 3)}
+ {\includegraphics[width=0.32\textwidth]{MAP_frac_gain_high_layer3_RunRUNNUMBER.png}}
+\caption{2D Maps of the fraction of pixels with gain $>$ \high_gain_frac per module for the 3 barrel layers (left: layer 1 , center: layer 2 , right: layer 3)}
 \end{figure}
 
 \begin{figure}[htp]
@@ -434,11 +531,39 @@ The following plots have one entry per pixel. Left plots are for BPIX, right are
  {\includegraphics[width=0.36\textwidth]{MAP_frac_gain_high_disk+1_RunRUNNUMBER.png}}
 \subfigure
  {\includegraphics[width=0.36\textwidth]{MAP_frac_gain_high_disk+2_RunRUNNUMBER.png}}
-\caption{2D Maps of the fraction of pixels with gain $>$ 5 (1 for comparison) per module for the 4 endcap disks (from top left to bottom right: disk-2 , disk-1 , disk+1 , disk+2 )}
+\caption{2D Maps of the fraction of pixels with gain $>$ \high_gain_frac per module for the 4 endcap disks (from top left to bottom right: disk-2 , disk-1 , disk+1 , disk+2 )}
 \end{figure}
 
 \pagebreak
 
+
+\subsection{fraction of bad fits}
+
+\begin{figure}[htp]
+ \centering
+\subfigure
+ {\includegraphics[width=0.32\textwidth]{MAP_frac_bad_fit_layer1_RunRUNNUMBER.png}}
+\subfigure
+ {\includegraphics[width=0.32\textwidth]{MAP_frac_bad_fit_layer2_RunRUNNUMBER.png}}
+\subfigure
+ {\includegraphics[width=0.32\textwidth]{MAP_frac_bad_fit_layer3_RunRUNNUMBER.png}}
+\caption{2D Maps of the fraction of pixels with bad fits per module for the 3 barrel layers (left: layer 1 , center: layer 2 , right: layer 3)}
+\end{figure}
+
+\begin{figure}[htp]
+ \centering
+\subfigure
+ {\includegraphics[width=0.36\textwidth]{MAP_frac_bad_fit_disk-2_RunRUNNUMBER.png}}
+\subfigure
+ {\includegraphics[width=0.36\textwidth]{MAP_frac_bad_fit_disk-1_RunRUNNUMBER.png}}
+\subfigure
+ {\includegraphics[width=0.36\textwidth]{MAP_frac_bad_fit_disk+1_RunRUNNUMBER.png}}
+\subfigure
+ {\includegraphics[width=0.36\textwidth]{MAP_frac_bad_fit_disk+2_RunRUNNUMBER.png}}
+\caption{2D Maps of the fraction of pixels with bad fits per module for the 4 endcap disks (from top left to bottom right: disk-2 , disk-1 , disk+1 , disk+2 )}
+\end{figure}
+
+\pagebreak
 
 
 
@@ -451,7 +576,7 @@ The following plots have one entry per pixel. Left plots are for BPIX, right are
 \subfigure
  {\includegraphics[width=0.32\textwidth]{MAP_ErrorGain_layer2_RunRUNNUMBER.png}}
 \subfigure
- {\includegraphics[width=0.32\textwidth]{MAP_ErrorGain_layer2_RunRUNNUMBER.png}}
+ {\includegraphics[width=0.32\textwidth]{MAP_ErrorGain_layer3_RunRUNNUMBER.png}}
 \caption{2D Maps of the mean error of 1/gain value per module for the 3 barrel layers (left: layer 1 , center: layer 2 , right: layer 3)}
 \end{figure}
 
@@ -481,7 +606,7 @@ The following plots have one entry per pixel. Left plots are for BPIX, right are
 \subfigure
  {\includegraphics[width=0.32\textwidth]{MAP_ErrorPedestal_layer2_RunRUNNUMBER.png}}
 \subfigure
- {\includegraphics[width=0.32\textwidth]{MAP_ErrorPedestal_layer2_RunRUNNUMBER.png}}
+ {\includegraphics[width=0.32\textwidth]{MAP_ErrorPedestal_layer3_RunRUNNUMBER.png}}
 \caption{2D Maps of the mean error of pedestal value per module for the 3 barrel layers (left: layer 1 , center: layer 2 , right: layer 3)}
 \end{figure}
 
@@ -512,7 +637,7 @@ The following plots have one entry per pixel. Left plots are for BPIX, right are
 \subfigure
  {\includegraphics[width=0.32\textwidth]{MAP_GainSaturate_layer2_RunRUNNUMBER.png}}
 \subfigure
- {\includegraphics[width=0.32\textwidth]{MAP_GainSaturate_layer2_RunRUNNUMBER.png}}
+ {\includegraphics[width=0.32\textwidth]{MAP_GainSaturate_layer3_RunRUNNUMBER.png}}
 \caption{2D Maps of the mean plateau value per module for the 3 barrel layers (left: layer 1 , center: layer 2 , right: layer 3)}
 \end{figure}
 
@@ -544,7 +669,7 @@ The following plots have one entry per pixel. Left plots are for BPIX, right are
 \subfigure
  {\includegraphics[width=0.32\textwidth]{MAP_GainDynamicRange_layer2_RunRUNNUMBER.png}}
 \subfigure
- {\includegraphics[width=0.32\textwidth]{MAP_GainDynamicRange_layer2_RunRUNNUMBER.png}}
+ {\includegraphics[width=0.32\textwidth]{MAP_GainDynamicRange_layer3_RunRUNNUMBER.png}}
 \caption{2D Maps of the mean range value per module for the 3 barrel layers (left: layer 1 , center: layer 2 , right: layer 3)}
 \end{figure}
 
@@ -577,7 +702,7 @@ The following plots have one entry per pixel. Left plots are for BPIX, right are
 \subfigure
  {\includegraphics[width=0.32\textwidth]{MAP_GainLowPoint_layer2_RunRUNNUMBER.png}}
 \subfigure
- {\includegraphics[width=0.32\textwidth]{MAP_GainLowPoint_layer2_RunRUNNUMBER.png}}
+ {\includegraphics[width=0.32\textwidth]{MAP_GainLowPoint_layer3_RunRUNNUMBER.png}}
 \caption{2D Maps of the mean lowest fitted VCAL value per module for the 3 barrel layers (left: layer 1 , center: layer 2 , right: layer 3)}
 \end{figure}
 
@@ -610,7 +735,7 @@ The following plots have one entry per pixel. Left plots are for BPIX, right are
 \subfigure
  {\includegraphics[width=0.32\textwidth]{MAP_GainHighPoint_layer2_RunRUNNUMBER.png}}
 \subfigure
- {\includegraphics[width=0.32\textwidth]{MAP_GainHighPoint_layer2_RunRUNNUMBER.png}}
+ {\includegraphics[width=0.32\textwidth]{MAP_GainHighPoint_layer3_RunRUNNUMBER.png}}
 \caption{2D Maps of the mean highest fitted VCAL value per module for the 3 barrel layers (left: layer 1 , center: layer 2 , right: layer 3)}
 \end{figure}
 
@@ -641,7 +766,7 @@ The following plots have one entry per pixel. Left plots are for BPIX, right are
 \subfigure
  {\includegraphics[width=0.32\textwidth]{MAP_GainNPoints_layer2_RunRUNNUMBER.png}}
 \subfigure
- {\includegraphics[width=0.32\textwidth]{MAP_GainNPoints_layer2_RunRUNNUMBER.png}}
+ {\includegraphics[width=0.32\textwidth]{MAP_GainNPoints_layer3_RunRUNNUMBER.png}}
 \caption{2D Maps of the mean number of fitted points per module for the 3 barrel layers (left: layer 1 , center: layer 2 , right: layer 3)}
 \end{figure}
 
@@ -674,7 +799,7 @@ The following plots have one entry per pixel. Left plots are for BPIX, right are
 \subfigure
  {\includegraphics[width=0.32\textwidth]{MAP_GainChi2NDF_layer2_RunRUNNUMBER.png}}
 \subfigure
- {\includegraphics[width=0.32\textwidth]{MAP_GainChi2NDF_layer2_RunRUNNUMBER.png}}
+ {\includegraphics[width=0.32\textwidth]{MAP_GainChi2NDF_layer3_RunRUNNUMBER.png}}
 \caption{2D Maps of the mean $\chi^2$/NDOF value per module for the 3 barrel layers (left: layer 1 , center: layer 2 , right: layer 3)}
 \end{figure}
 
@@ -707,7 +832,7 @@ The following plots have one entry per pixel. Left plots are for BPIX, right are
 \subfigure
  {\includegraphics[width=0.32\textwidth]{MAP_GainChi2Prob_layer2_RunRUNNUMBER.png}}
 \subfigure
- {\includegraphics[width=0.32\textwidth]{MAP_GainChi2Prob_layer2_RunRUNNUMBER.png}}
+ {\includegraphics[width=0.32\textwidth]{MAP_GainChi2Prob_layer3_RunRUNNUMBER.png}}
 \caption{2D Maps of the mean probability value per module for the 3 barrel layers (left: layer 1 , center: layer 2 , right: layer 3)}
 \end{figure}
 

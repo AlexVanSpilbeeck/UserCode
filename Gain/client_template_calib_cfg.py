@@ -71,7 +71,7 @@ process.siPixelSCurveAnalysis.saveFile = False
 process.load("CalibTracker.SiPixelGainCalibration.SiPixelGainCalibrationAnalysis_cfi")
 process.siPixelGainCalibrationAnalysis.DetSetVectorSiPixelCalibDigiTag = 'siPixelCalibDigis'
 process.siPixelGainCalibrationAnalysis.saveFile = False
-process.siPixelGainCalibrationAnalysis.savePixelLevelHists = False
+process.siPixelGainCalibrationAnalysis.savePixelLevelHists = True 
 process.siPixelGainCalibrationAnalysis.vcalHighToLowConversionFac=7
 process.siPixelGainCalibrationAnalysis.useVCALHIGH = True 
 

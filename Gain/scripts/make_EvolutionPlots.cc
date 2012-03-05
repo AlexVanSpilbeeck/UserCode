@@ -1,4 +1,7 @@
 #include <vector>
+#include <iostream>
+#include <fstream>
+#include <sstream>
 #include "TH1F.h"
 #include "TString.h"
 #include "TCanvas.h"
@@ -6,6 +9,9 @@
 #include "TFile.h"
 #include "TStyle.h"
 #include "TLegend.h"
+#include "TSystem.h"
+
+using namespace std;
 
 #include "files_funcs.C"
 
@@ -18,7 +24,7 @@ void makeEvolHisto(vector<TFile*>& , vector<TString>& , TString&);
 void write(TH1F* , Bool_t = 0 , Bool_t = 0 , TString = "rmou"); // logY , largePad , optstatoption
 void writeBarrel(TH1F* , TH1F* , TH1F* , TString name);
 void writeEndCap(TH1F* , TH1F* , TH1F* , TH1F* , TString name);
-
+void addRun(TString , vector<TString>& , vector<TString>& );
 
 
 vector<TString> subdet;
@@ -41,6 +47,13 @@ void make_EvolutionPlots(){
   sruns.push_back("172233");
   sfiles.push_back("../Run_173484/Summary_Run173484/Comp_Run173484.root");
   sruns.push_back("173484");
+  sfiles.push_back("../Run_180770/Summary_Run180770/Comp_Run180770.root");
+  sruns.push_back("180770");
+  sfiles.push_back("../Run_182716/Summary_Run182716/Comp_Run182716.root");
+  sruns.push_back("182716");
+  
+  addRun( "184644" , sfiles , sruns );
+  addRun( "185458" , sfiles , sruns );
   
   vector<TString> histos;
   histos.push_back("SUB_Gain_whole");
@@ -51,7 +64,7 @@ void make_EvolutionPlots(){
   histos.push_back("SUB_frac_gain_high_whole");
   
   vector<TFile*> files;
-  for(int f = 0 ; f < sfiles.size() ; ++f)
+  for(unsigned f = 0 ; f < sfiles.size() ; ++f)
     files.push_back(getFile(sfiles[f]));
     
     
@@ -62,6 +75,13 @@ void make_EvolutionPlots(){
     makeEvolHisto(files , sruns , *h);
     
   output->Close();
+  
+  
+  gSystem->Exec("mkdir -p figs/");
+  gSystem->Exec("mv *.png figs/.");
+  
+  cout << endl << "  To retrieve the figurse, please do:" << endl;
+  cout << "scp -r rougny@lxplus.cern.ch:/afs/cern.ch/user/r/rougny/gain/CMSSW_3_11_2/src/DQM/SiPixelCommon/test/scripts/figs ." << endl << endl;
   
 }
 
@@ -74,13 +94,13 @@ void makeEvolHisto(vector<TFile*>& files , vector<TString>& sruns , TString& shi
   name.Remove(name.First("_") , name.Length() - name.First("_"));
 
   vector<TH1F> evol(subdet.size() , TH1F());
-  for(int s = 0 ; s < subdet.size() ; ++s)  
+  for(unsigned s = 0 ; s < subdet.size() ; ++s)  
     evol[s] = TH1F("evol_"+name+"_"+subdet[s] , "evol_"+name+"_"+subdet[s] , files.size() , 0 , files.size());
 
-  for(int i = 0 ; i < files.size() ; ++i){
+  for(unsigned i = 0 ; i < files.size() ; ++i){
     TH1F* h = getHist<TH1F>( *(files[i]) , shisto , 0);
     
-    for(int s = 0 ; s < subdet.size() ; ++s){
+    for(unsigned s = 0 ; s < subdet.size() ; ++s){
       //cout << evol[s].GetName() << "  " << evol[s].GetNbinsX() << endl;
       evol[s].SetBinContent(i+1 , h->GetBinContent(s+1));
       evol[s].SetBinError(i+1 , h->GetBinError(s+1));
@@ -91,7 +111,7 @@ void makeEvolHisto(vector<TFile*>& files , vector<TString>& sruns , TString& shi
   
   cDir->cd();
   
-  for(int s = 0 ; s < subdet.size() ; ++s){
+  for(unsigned s = 0 ; s < subdet.size() ; ++s){
     write( &(evol[s]) );
   }
   
@@ -206,3 +226,14 @@ void writeEndCap(TH1F* dm2 , TH1F* dm1 , TH1F* dp1 , TH1F* dp2 , TString name){
     }
   }
 }
+
+
+void addRun(TString nRun, vector<TString>& sfiles, vector<TString>& sruns){
+  ostringstream f_str(""); f_str << "../Run_" << nRun << "/Summary_Run" << nRun << "/Comp_Run" << nRun << ".root";
+  sfiles.push_back(f_str.str());
+  sruns.push_back(nRun);  
+}
+  
+  
+  
+  

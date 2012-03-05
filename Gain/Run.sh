@@ -19,16 +19,21 @@ ext=dmp
 usage(){
 
 echo 'Usage :
-./Run.sh -create   RUNNUMBER INPUTDIR STOREDIR  : will create the needed directories, python files to run the calib.
-./Run.sh -submit   RUNNUMBER : will launch the 40 calibration jobs
-./Run.sh -resubmit RUNNUMBER iJOB: will resubmit job iJOB , using the submit_iJOB.sh in the working directory.
-./Run.sh -stage    RUNNUMBER : will stage all files needed that are stored on castor.
-./Run.sh -hadd     RUNNUMBER : will hadd all 40 output files of the calib jobs into one file
-./Run.sh -summary  RUNNUMBER : will launch the summary job.
-./Run.sh -pdf      RUNNUMBER : will recompile the latex file to recreate the pdf summary.
-./Run.sh -compare  RUNNUMBER1 FILE1 RUNNUMBER2 FILE2
-     OR  -compare  RUNNUMBER1 RUNNUMBER2 : only if you have run -create/-submit/-hadd for both runs
-./Run.sh -payload  RUNNUMBER : will produce the payloads.
+./Run.sh -create     RUNNUMBER INPUTDIR STOREDIR : will create the needed directories, python files to run the calib.
+     OR  -create     RUNNUMBER : default INPUTDIR=/castor/cern.ch/user/U/USER/GainCalib_runXXXXX & STOREDIR=/castor/cern.ch/user/U/USER/.
+./Run.sh -dat2db     RUNNUMBER PATH/TO/CALIB.DAT : will transform calib.dat file into a payload and use it. Use only if not popconed.
+./Run.sh -submit     RUNNUMBER : will launch the 40 calibration jobs
+./Run.sh -resubmit   RUNNUMBER iJOB: will resubmit job iJOB , using the submit_iJOB.sh in the working directory.
+./Run.sh -stage      RUNNUMBER : will stage all files needed that are stored on castor.
+./Run.sh -hadd       RUNNUMBER : will hadd all 40 output files of the calib jobs into one file
+./Run.sh -summary    RUNNUMBER : will launch the summary job.
+./Run.sh -pdf        RUNNUMBER : will recompile the latex file to recreate the pdf summary.
+./Run.sh -compare    RUNNUMBER1 FILE1 RUNNUMBER2 FILE2
+     OR  -compare    RUNNUMBER1 RUNNUMBER2 : only if you have run -create/-submit/-hadd for both runs
+./Run.sh -payload    RUNNUMBER : will produce the payloads.
+./Run.sh -twiki      RUNNUMBER : will produce the text to add to the twiki.
+./Run.sh -comp_twiki RUNNUMBER : will produce the text to add to the twiki for all the comparisons with this run.
+./Run.sh -info       RUNNUMBER : will output info on the run.
 '
 exit
 
@@ -37,6 +42,12 @@ exit
 
 
 set_parameters(){
+  if [ "$indir" == "" ] && [ "$storedir" == "" ];then
+    indir=/castor/cern.ch/user/${USER:0:1}/$USER/GainCalib_run$run
+    storedir=/castor/cern.ch/user/${USER:0:1}/$USER/
+  fi
+
+
   storedir=$storedir/GainRun_$run
   echo "run : $run"
   echo "indir : $indir"
@@ -59,16 +70,19 @@ read_config(){
   if [ ! -f $config ];then echo "No config found for run $run. Make sure Run_$run exist in `pwd` ..." ; exit ;fi
   indir=`cat $config|grep -e "indir ="|awk '{printf $3}'`
   storedir=`cat $config|grep -e "storedir ="|awk '{printf $3}'`
+  calib_payload=`cat $config|grep -e "calib_payload ="|awk '{printf $3}'`
+  if [ "$calib_payload" == "" ];then calib_payload='none';fi
   echo -e "Reading config file $config"
   echo -e "run : $run"
   echo -e "indir : $indir"
-  echo -e "storedir : $storedir\n"
+  echo -e "storedir : $storedir"
+  echo -e "calib payload : $calib_payload\n"
   runningdir=`pwd`/Run_$run
 }
 
 make_dir(){
   if [ ! -d $1 ] ; then mkdir $1
-  else rm -r $1/*
+  else rm -fr $1/*
   fi
 }
 
@@ -156,8 +170,64 @@ echo
 
 }
 
+dat_to_db(){
+
+  if [ "$dat_file" == "" ];then usage;fi
+  if [ ! -f $dat_file ];then echo "$dat_file is not present. Please correct it !" ; exit 0;fi
+  
+  cfg='../../../CondTools/SiPixel/test/testPixelPopConCalibAnalyzer_cfg.py'
+  if [ ! -f $cfg ];then echo "Package CondTools/SiPixel is not present. Please do a \'cvs co CondTools/SiPixel\'";exit 0;fi
+
+  echo "transforming $dat_file in calib_$run.db ..."
+  cp $cfg $runningdir/.
+  cp $dat_file $runningdir/calib_$run.dat
+  cd $runningdir/
+  cfg=`echo $cfg|sed 's:.*/::'`
+  dat_file=calib_$run.dat
+  db_file=calib_$run.db
+  
+  rm -f $db_file
+
+  echo "process.PixelPopConCalibAnalyzer.Source.connectString = \"file://$dat_file\"" >> $cfg
+  echo "process.PixelPopConCalibAnalyzer.Source.sinceIOV = $run" >> $cfg
+  echo "process.PoolDBOutputService.logconnect = \"sqlite_file:log_$run.db\"" >> $cfg
+  echo "process.PoolDBOutputService.toPut[0].tag = \"GainCalibration_default\"" >> $cfg
+  echo "process.PoolDBOutputService.connect = \"sqlite_file:$db_file\"" >> $cfg
+
+  cmsRun $cfg
+  
+  if [ ! -f $db_file ];then echo "There was an error and the payload was not created ..."; exit 0;fi
+
+
+  if [ `cat $runningdir/config|grep -c "calib_payload"` -eq 0 ];then
+    echo "calib_payload = `pwd`/$db_file" >> $runningdir/config
+  fi
+  
+  
+  #############################
+  # checking the payload
+  
+  cfg='PixelPopConCalibChecker_cfg.py'
+  cp ../../../../CondTools/SiPixel/test/$cfg .
+  
+  
+  echo "process.demo.filename = \"$dat_file\"" >> $cfg
+  echo "process.source.firstValue = $run" >> $cfg
+  echo "process.source.lastValue = $run" >> $cfg
+  echo "process.sipixelcalib_essource.connect = \"sqlite_file:$db_file\"" >> $cfg
+  echo "process.sipixelcalib_essource.toGet[0].tag = \"GainCalibration_default\"" >> $cfg
+
+  echo -e "\n\n---------------------------------------\n  Checking the produced payload ...\n"
+  cmsRun $cfg
+}
+
+
+
+
 submit_calib(){
 
+  if [ "$calib_payload" == "none" ];then  echo "For now, you absolutely need a local payload. PLease run ./Run.sh -dat2db before attempting to submit job !!" ; exit ; fi
+ 
   set_specifics $indir
     
   cat submit_template.sh |\
@@ -179,6 +249,11 @@ submit_calib(){
     rm -f submit_${i}.sh
     cat submit_template.sh |\
       sed "s/NUM/${i}/"    > submit_${i}.sh
+    
+    #need to read from sqlite_file now ...
+    if [ "$calib_payload" != "none" ];then
+      echo -e "\nprocess.siPixelCalibGlobalTag.connect = \"sqlite_file:$calib_payload\"\n" >> $cfg
+    fi
 
     #qsub -q localgrid@cream01 -j oe -N job_${i} -o ${runningdir}/JOB_${i}/stdout submit_${i}.sh
     submit_to_queue ${run}_${i} ${runningdir}/JOB_${i}/stdout submit_${i}.sh
@@ -198,6 +273,19 @@ resubmit_job(){
   echo "Re-submitting job $ijob:"
   submit_to_queue ${run}_${ijob} ${runningdir}/JOB_${ijob}/stdout submit_${ijob}.sh
   
+}
+
+resubmit_all(){
+  set_specifics $storedir 
+  cd $runningdir
+  
+  for ijob in `seq 0 39`;do
+    if [ `is_file_present $storedir/$ijob.root` -eq 0 ];then
+      resubmit_job
+    fi
+  
+  done
+
 }
 
 stage_all_files(){
@@ -250,43 +338,6 @@ submit_hadd(){
 
 }
 
-submit_summary(){
-
-  set_specifics ${storedir}
-  if [ `$T2_LS  $storedir/GainCalibration.root 2>&1|grep "No such"|wc -l` -eq 1 ]; then
-    echo "File $storedir/GainCalibration.root is not present ..."; exit ; fi ;
-  stage_list_of_files $storedir/GainCalibration.root
-
-  #making directories
-  make_dir ${runningdir}/TEXToutput
-  make_dir $runningdir/Summary_Run$run
-  
-  cp -fr scripts/make_SummaryPlots.cc ${runningdir}/Summary_Run$run/make_SummaryPlots_template.cc
-  cp -fr scripts/gain_summary.txt  ${runningdir}/Summary_Run$run/gain_summary_template.tex
-  cp -fr scripts/TMean.* ${runningdir}/Summary_Run$run/.
-  cp -fr scripts/PixelNameTranslator.* ${runningdir}/Summary_Run$run/.
-  
-  cd $runningdir/Summary_Run$run
-
-  rm -fr make_SummaryPlots.cc gain_summary.tex
-  sed "s#RUNNUMBER#$run#" < make_SummaryPlots_template.cc > make_SummaryPlots.cc
-  sed "s#RUNNUMBER#$run#" < gain_summary_template.tex > gain_summary.tex
-  #rm -fr gain_summary_template.tex make_SummaryPlots_template.cc
-
-  #rm -fr $T2_TMP_DIR/*
-  #$T2_CP `file_loc $storedir/GainCalibration.root` $T2_TMP_DIR/GainCalibration.root
-  echo "(root -l -b -x make_SummaryPlots.cc+\"(\"`file_loc $storedir/GainCalibration.root`\")\" -q)"
-  root -l -b -x make_SummaryPlots.cc+"(\"`file_loc $storedir/GainCalibration.root`\")" -q
-
-  rm -f gain_summary_final_run_$run.tex
-  sed '/TOREPLACE/,$ d' < gain_summary.tex > gain_summary_final_run_$run.tex
-  cat texSummary_Run${run}.tex >> gain_summary_final_run_$run.tex
-  sed '1,/TOREPLACE/d'< gain_summary.tex >> gain_summary_final_run_$run.tex
-
-  pdflatex gain_summary_final_run_$run.tex
-  pdflatex gain_summary_final_run_$run.tex
-}
-
 submit_summary_new(){
 
   set_specifics ${storedir}
@@ -302,27 +353,34 @@ submit_summary_new(){
   cp -fr scripts/gain_summary.txt  ${runningdir}/Summary_Run$run/gain_summary_template.tex
   cp -fr scripts/TMean.* ${runningdir}/Summary_Run$run/.
   cp -fr scripts/PixelNameTranslator.* ${runningdir}/Summary_Run$run/.
+  cp -fr scripts/header.h scripts/functions.C scripts/containers.h scripts/hist_declarations.C ${runningdir}/Summary_Run$run/.
   
   cd $runningdir/Summary_Run$run
 
   rm -fr gain_summary.tex
   #sed "s#RUNNUMBER#$run#" < make_SummaryPlots_template.cc > make_SummaryPlots.cc
-  sed "s#RUNNUMBER#$run#" < gain_summary_template.tex > gain_summary.tex
+  cat gain_summary_template.tex | sed "s#RUNNUMBER#$run#" | sed "s#DIFF_TO_REPLACE#0#" > gain_summary.tex
   #rm -fr gain_summary_template.tex make_SummaryPlots_template.cc
 
   #rm -fr $T2_TMP_DIR/*
   #$T2_CP `file_loc $storedir/GainCalibration.root` $T2_TMP_DIR/GainCalibration.root
   echo "(root -l -b -x make_ComparisonPlots.cc+\"(\"`file_loc $storedir/GainCalibration.root`\",\"$run\")\" -q)"
   root -l -b -x make_ComparisonPlots.cc+"(\"`file_loc $storedir/GainCalibration.root`\",\"$run\")" -q
+  echo -e "\n************************* SUMMARY"
+  cat *.txt
+  echo -e "\nlog files: \n"`ls *.log|sed "s:^:   --> Run_$run/Summary_Run$run/:"`"\n"
 
   rm -f gain_summary_final_run_$run.tex
   sed '/TOREPLACE/,$ d' < gain_summary.tex > gain_summary_final_run_$run.tex
   cat texSummary_Run${run}.tex >> gain_summary_final_run_$run.tex
   sed '1,/TOREPLACE/d'< gain_summary.tex >> gain_summary_final_run_$run.tex
 
-  pdflatex gain_summary_final_run_$run.tex
-  pdflatex gain_summary_final_run_$run.tex
-  echo -e "\nPDF file:\n `pwd`/gain_summary_final_$run.pdf"
+  echo "Making pdf ..."
+  pdflatex gain_summary_final_run_$run.tex &>  latex.log
+  pdflatex gain_summary_final_run_$run.tex >> latex.log 2>&1
+  if [ ! -f gain_summary_final_run_$run.pdf ];then cat latex.log;fi
+  
+  echo -e "\nPDF file:\n `pwd`/gain_summary_final_run_$run.pdf"
 }
 
 
@@ -332,16 +390,18 @@ compile_pdf(){
   cd $runningdir/Summary_Run$run
   
   rm -fr gain_summary.tex
-  sed "s#RUNNUMBER#$run#" < gain_summary_template.tex > gain_summary.tex
+  cat gain_summary_template.tex | sed "s#RUNNUMBER#$run#" | sed "s#DIFF_TO_REPLACE#0#" > gain_summary.tex
 
   rm -f gain_summary_final_run_$run.tex
   sed '/TOREPLACE/,$ d' < gain_summary.tex > gain_summary_final_run_$run.tex
   cat texSummary_Run${run}.tex >> gain_summary_final_run_$run.tex
   sed '1,/TOREPLACE/d'< gain_summary.tex >> gain_summary_final_run_$run.tex
 
-  pdflatex gain_summary_final_run_$run.tex
-  pdflatex gain_summary_final_run_$run.tex
-  echo -e "\nPDF file:\n `pwd`/gain_summary_final_$run.pdf"
+  echo "Making pdf ..."
+  pdflatex gain_summary_final_run_$run.tex &>  latex.log
+  pdflatex gain_summary_final_run_$run.tex >> latex.log 2>&1
+  if [ ! -f gain_summary_final_run_$run.pdf ];then cat latex.log;fi
+  echo -e "\nPDF file:\n `pwd`/gain_summary_final_run_$run.pdf"
 }
 
 set_files_for_comparison(){
@@ -395,16 +455,19 @@ compare_runs(){
   cp -fr scripts/make_ComparisonPlots.cc $dir/.
   cp -fr scripts/TMean.* $dir/.
   cp -fr scripts/PixelNameTranslator.* $dir/.
+  cp -fr scripts/header.h scripts/functions.C scripts/containers.h scripts/hist_declarations.C $dir/.
   
   cd $dir
   
   echo "( root -l -b -q make_ComparisonPlots.cc+\"(\"$file1\",\"$run1\",\"$file2\",\"$run2\")\" )"
   root -l -b -q make_ComparisonPlots.cc+"(\"$file1\",\"$run1\",\"$file2\",\"$run2\")"
-  
+  echo -e "\n************************* SUMMARY"
+  cat *.txt
+  echo -e "\nlog files: \n"`ls *.log|sed "s:^:   --> $dir/:"`"\n"
   
   cp -fr ../scripts/gain_summary.txt  gain_summary_template.tex
   rm -fr gain_summary.tex
-  sed "s#RUNNUMBER#$run1-$run2#" < gain_summary_template.tex > gain_summary.tex
+  cat gain_summary_template.tex | sed "s#RUNNUMBER#$run1-$run2#" | sed "s#DIFF_TO_REPLACE#1#" > gain_summary.tex
 
   rm -f gain_summary_final_$run1-$run2.tex
   sed '/TOREPLACE/,$ d' < gain_summary.tex > gain_summary_final_$run1-$run2.tex
@@ -413,6 +476,7 @@ compare_runs(){
 
   pdflatex gain_summary_final_$run1-$run2.tex &>  latex.log
   pdflatex gain_summary_final_$run1-$run2.tex >> latex.log 2>&1
+  if [ ! -f gain_summary_final_$run1-$run2.pdf ];then cat latex.log;fi
   echo -e "\nPDF file:\n `pwd`/gain_summary_final_$run1-$run2.pdf"
 }
 
@@ -431,9 +495,7 @@ make_payload(){
   if [ ! -f SiPixelGainCalibrationReadDQMFile_cfg.py ];then
     echo "You are missing SiPixelGainCalibrationReadDQMFile_cfg.py. Please fix this !!" ; exit
   fi
-  cp SiPixelGainCalibrationReadDQMFile_cfg.py original_SiPixelGainCalibrationReadDQMFile_cfg.py
-  
-  
+    
   if [ ! -f prova.db ];then
     echo "prova.db not found ... That is not normal. Re-checkout CondTools/SiPixel ..." ; exit
   fi
@@ -442,6 +504,7 @@ make_payload(){
   stage_list_of_files $storedir/GainCalibration.root
   
   file=$T2_TMP_DIR/GainCalibration_$run.root
+  echo "Copying $storedir/GainCalibration.root to $file"
   $T2_CP $storedir/GainCalibration.root $file
   #set_specifics $file
   
@@ -449,18 +512,18 @@ make_payload(){
   
   
   payload=prova_GainRun${run}_31X.db
-  cp prova.db $payload
+  cp prova.db $T2_TMP_DIR/$payload
   payload_root=Summary_payload_Run${run}.root
   
-  echo "RM: `$T2_RM $storedir/$payload`"
-  echo "RM: `$T2_RM $storedir/$payload_root`"
+  echo -e "RM: `$T2_RM $storedir/$payload`"
+  echo -e "RM: `$T2_RM $storedir/$payload_root`"
   
   #Changing some parameters in the python file:
-  cat original_SiPixelGainCalibrationReadDQMFile_cfg.py |\
+  cat SiPixelGainCalibrationReadDQMFile_cfg.py |\
     sed "s#file:///tmp/rougny/test.root#`file_loc $file`#"  |\
     sed 's#useMeanWhenEmpty = cms.untracked.bool(False)#useMeanWhenEmpty = cms.untracked.bool(True)#'|\
     sed "s#sqlite_file:prova.db#sqlite_file:$T2_TMP_DIR/${payload}#" |\
-    sed "s#/tmp/rougny/histos.root#$T2_TMP_DIR/$payload_root#" > SiPixelGainCalibrationReadDQMFile_cfg.py
+    sed "s#/tmp/rougny/histos.root#$T2_TMP_DIR/$payload_root#" > SiPixelGainCalibrationReadDQMFile_Offline_cfg.py
     
     
   #cat SiPixelGainCalibrationReadDQMFile_cfg.py
@@ -471,8 +534,8 @@ make_payload(){
   echo "  ==> Summary root file: $payload_root"
   echo -e "--------------------------------------\n"
   
-  echo "  (\" cmsRun SiPixelGainCalibrationReadDQMFile_cfg.py \" )"
-  cmsRun SiPixelGainCalibrationReadDQMFile_cfg.py
+  echo "  (\" cmsRun SiPixelGainCalibrationReadDQMFile_Offline_cfg.py \" )"
+  cmsRun SiPixelGainCalibrationReadDQMFile_Offline_cfg.py
   
   $T2_CP $T2_TMP_DIR/$payload $storedir/$payload
   $T2_CP $T2_TMP_DIR/$payload_root $storedir/$payload_root
@@ -485,22 +548,22 @@ make_payload(){
   ###########################################   HLT PAYLOAD
  
   payload=prova_GainRun${run}_31X_HLT.db
-  cp prova.db $payload
+  cp prova.db $T2_TMP_DIR/$payload
   payload_root=Summary_payload_Run${run}_HLT.root
   
-  echo "RM: `$T2_RM $storedir/$payload`"
-  echo "RM: `$T2_RM $storedir/$payload_root`"
+  echo -e "RM: `$T2_RM $storedir/$payload`"
+  echo -e "RM: `$T2_RM $storedir/$payload_root`"
   
   
   #Changing some parameters in the python file:
-  cat original_SiPixelGainCalibrationReadDQMFile_cfg.py |\
+  cat SiPixelGainCalibrationReadDQMFile_cfg.py |\
     sed "s#file:///tmp/rougny/test.root#`file_loc $file`#"  |\
     sed 's#useMeanWhenEmpty = cms.untracked.bool(False)#useMeanWhenEmpty = cms.untracked.bool(True)#'|\
     sed "s#sqlite_file:prova.db#sqlite_file:$T2_TMP_DIR/${payload}#" |\
     sed "s#/tmp/rougny/histos.root#$T2_TMP_DIR/$payload_root#"|\
     sed "s#cms.Path(process.readfileOffline)#cms.Path(process.readfileHLT)#"|\
     sed "s#record = cms.string('SiPixelGainCalibrationOfflineRcd')#record = cms.string('SiPixelGainCalibrationForHLTRcd')#"|\
-    sed "s#GainCalib_TEST_offline#GainCalib_TEST_hlt#" > SiPixelGainCalibrationReadDQMFile_cfg.py
+    sed "s#GainCalib_TEST_offline#GainCalib_TEST_hlt#" > SiPixelGainCalibrationReadDQMFile_HLT_cfg.py
     
     
   #cat SiPixelGainCalibrationReadDQMFile_cfg.py
@@ -511,27 +574,84 @@ make_payload(){
   echo "  ==> Summary root file: $payload_root"
   echo -e "--------------------------------------\n"
   
-  echo "  (\" cmsRun SiPixelGainCalibrationReadDQMFile_cfg.py \" )"
-  cmsRun SiPixelGainCalibrationReadDQMFile_cfg.py
+  echo "  (\" cmsRun SiPixelGainCalibrationReadDQMFile_HLT_cfg.py \" )"
+  cmsRun SiPixelGainCalibrationReadDQMFile_HLT_cfg.py
   
+  ls $T2_TMP_DIR
   $T2_CP $T2_TMP_DIR/$payload $storedir/$payload
   $T2_CP $T2_TMP_DIR/$payload_root $storedir/$payload_root
   
+  rm -f $T2_TMP_DIR/${payload}
+  rm -f $T2_TMP_DIR/${payload_root}
   
   
   ####################################
    
-  rm -f $T2_TMP_DIR/${payload}
-  rm -f $T2_TMP_DIR/${payload_root}
   rm -f $file  
   
-  cp original_SiPixelGainCalibrationReadDQMFile_cfg.py SiPixelGainCalibrationReadDQMFile_cfg.py
+}
+
+
+
+print_twiki_text(){
+
+echo '---++++ Run '$run'
+   * DMP Files : '$indir'
+   * Merged Analyzed File : '$storedir'/GainCalibration.root
+   * PDF summary : [[%ATTACHURL%/gain_summary_final_run_'$run'.pdf][gain_summary_final_run_'$run'.pdf]]
+   * TAR file containing PDF + root + figs PNGs + logs : [[%ATTACHURL%/run'$run'.gz.tar][run'$run'.gz.tar]]
+   * Payloads 31X & summaries: '$storedir
+
+  cd $runningdir
+  mkdir -p ZIP/figs
+  cp Summary_Run$run/*.png ZIP/figs/.
+  cp Summary_Run$run/gain_summary_final_run_$run.pdf ZIP/.
+  cp Summary_Run$run/*Run$run.log ZIP/.
+  cp Summary_Run$run/Comp_Run$run.root ZIP/Summary_Run$run.root
+  
+  mv ZIP summary_run$run
+  zip_file=run$run.gz.tar
+  echo -e "\nMaking Run_$run/$zip_file ...\n"
+  tar czf $zip_file summary_run$run
+  rm -fr summary_run$run
+  
+  echo -e "  To get it, please issue:\nscp $USER@lxplus.cern.ch:`pwd`/$zip_file .\ntar xzf $zip_file\n"
+}
+
+print_comp_twiki_text(){
+
+  for dir in `ls -d Comp*$run*`;do
+    run1=`echo $dir|sed 's:Comp_::'|awk -F"-" '{print $1}'`
+    run2=`echo $dir|sed 's:Comp_::'|awk -F"-" '{print $2}'`
+
+echo '---++++++ Run '$run1' - '$run2'
+   * PDF summary : [[%ATTACHURL%/gain_summary_final_'$run1-$run2'.pdf][gain_summary_final_'$run1-$run2'.pdf]]
+   * TAR file containing PDF + root + figs PNGs + logs : [[%ATTACHURL%/run'$run1-$run2'.gz.tar][run'$run1-$run2'.gz.tar]]'
+
+
+    cd Comp_$run1-$run2
+    mkdir -p ZIP/figs
+    cp *.png ZIP/figs/.
+    cp gain_summary_final_*.pdf ZIP/.
+    cp *Run*.log ZIP/.
+    cp Comp_Run*.root ZIP/Summary_Run$run1-$run2.root
+    
+    mv ZIP summary_run$run1-$run2
+    zip_file=run$run1-$run2.gz.tar
+    echo -e "\nMaking Comp_$run1-$run2/$zip_file ...\n"
+    tar czf $zip_file summary_run$run1-$run2
+    rm -fr summary_run$run1-$run2
+    
+    echo -e "  To get it, please issue:\nscp $USER@lxplus.cern.ch:`pwd`/$zip_file .\ntar xzf $zip_file\n"
+    cd .. 
+done
 }
 
 
 
 
 create=0
+dat2db=0
 submit=0
 resubmit=0
 stage=0
@@ -542,27 +662,36 @@ compare=0
 verbose=0
 ijob=-1
 prova=0
+twiki=0
+comp_twiki=0
+info=0
 
 run1=0
 file1=""
 run2=0
 file2=""
+dat_file=''
+
 
 #lock
 
 if [ $# -eq 0 ] ; then usage ; fi
 for arg in $* ; do
   case $arg in
-    -create)       create=1   ; run=$2 ; indir=$3 ; storedir=$4 ; shift ; shift ; shift ; shift ;;
-    -submit)       submit=1   ; run=$2 ; shift ;;
-    -resubmit)     resubmit=1 ; run=$2 ; ijob=$3  ; shift ;;
-    -stage)       stage=1    ; run=$2 ; shift ;;
-    -hadd)         hadd=1     ; run=$2 ; shift ;;
-    -summary)      summary=1  ; run=$2 ; shift ;;
-    -pdf)          pdf=1      ; run=$2 ; shift ;;
-    -compare)      compare=1  ; run=0  ; run1=$2 ; file1=$3 ; run2=$4 ; file2=$5 ; shift ; shift ; shift ; shift ; shift ;;
-    -payload)      prova=1  ; run=$2 ; shift ;;
-    -v)            verbose=1  ; shift ;;
+    -create)       create=1     ; run=$2 ; indir=$3 ; storedir=$4 ; shift ; shift ; shift ; shift ;;
+    -dat2db)       dat2db=1     ; run=$2 ; dat_file=$3 ; shift ; shift ; shift ;;
+    -submit)       submit=1     ; run=$2 ; shift ;;
+    -resubmit)     resubmit=1   ; run=$2 ; ijob=$3  ; shift ;;
+    -stage)        stage=1      ; run=$2 ; shift ;;
+    -hadd)         hadd=1       ; run=$2 ; shift ;;
+    -summary)      summary=1    ; run=$2 ; shift ;;
+    -pdf)          pdf=1        ; run=$2 ; shift ;;
+    -compare)      compare=1    ; run=0  ; run1=$2 ; file1=$3 ; run2=$4 ; file2=$5 ; shift ; shift ; shift ; shift ; shift ;;
+    -payload)      prova=1      ; run=$2 ; shift ;;
+    -twiki)        twiki=1      ; run=$2 ; shift ;;
+    -comp_twiki)   comp_twiki=1 ; run=$2 ; shift ;;
+    -info)         info=1       ; run=$2 ; shift ;;
+    -v)            verbose=1    ; shift ;;
     -help)         usage ;;
     *)             ;;
   esac
@@ -577,6 +706,12 @@ if [ $create -eq 1 ];then
   make_file_list
 fi
 
+if [ $dat2db -eq 1 ];then
+  read_config
+  dat_to_db
+fi
+
+
 if [ $submit -eq 1 ];then
   read_config
   submit_calib
@@ -584,7 +719,8 @@ fi
 
 if [ $resubmit -eq 1 ];then
   read_config
-  resubmit_job
+  if [ "$ijob" == "" ];then resubmit_all;
+  else resubmit_job; fi
 fi
 
 if [ $stage -eq 1 ];then
@@ -619,6 +755,22 @@ if [ $prova -eq 1 ];then
   read_config
   make_payload
 fi
+
+
+if [ $twiki -eq 1 ];then
+  read_config
+  print_twiki_text
+fi
+
+if [ $comp_twiki -eq 1 ];then
+  #read_config
+  print_comp_twiki_text
+fi
+
+if [ $info -eq 1 ];then
+  read_config
+fi
+
 
 rm -f .lock_gaincalib
 

@@ -1,3 +1,5 @@
+verbose=0
+
 #################
 #Queues
 q_lxplus=cmscaf1nw
