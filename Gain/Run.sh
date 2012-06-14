@@ -112,7 +112,7 @@ create(){
   $T2_CHMOD 0777 ${storedir}/ #TOFIX ?
   
   #chmod -R 0777 $indir
-
+  set_specifics $indir
   if [ `is_on_castor $indir` -eq 1 ] ; then wait_for_staging ; fi
 }
 
@@ -433,6 +433,8 @@ compare_runs(){
 
   if [ "$run1" == "0" ] || [ "$run2" == "0" ] || [ "$file1" == "" ] || [ "$file2" == "" ];then usage ; fi
 
+  if [ $run1 -gt $run2 ];then echo "Warning !! Inverted runnumbers: you should put the newest run at the end ..."; fi
+
   stage_list_of_files $file1 $file2
   
   dir=Comp_${run1}-${run2}
@@ -569,7 +571,7 @@ make_payload(){
   #cat SiPixelGainCalibrationReadDQMFile_cfg.py
   
   echo -e "\n--------------------------------------"
-  echo "Making the payload for offline:"
+  echo "Making the payload for HLT:"
   echo "  $storedir/$payload"
   echo "  ==> Summary root file: $payload_root"
   echo -e "--------------------------------------\n"
