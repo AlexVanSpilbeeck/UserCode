@@ -16,51 +16,6 @@ process.load("RecoLocalTracker.SiPixelClusterizer.SiPixelClusterizer_cfi")
 process.load("RecoLocalTracker.SiPixelRecHits.SiPixelRecHits_cfi")
 process.load("RecoLocalTracker.SiPixelRecHits.PixelCPEESProducers_cff")
 
-process.load("DQM.SiPixelMonitorRawData.SiPixelMonitorRawData_cfi")
-process.SiPixelRawDataErrorSource.saveFile = False
-process.SiPixelRawDataErrorSource.isPIB = False
-process.SiPixelRawDataErrorSource.slowDown = False
-process.SiPixelRawDataErrorSource.reducedSet = False
-
-process.load("DQM.SiPixelMonitorDigi.SiPixelMonitorDigi_cfi")
-process.SiPixelDigiSource.saveFile = False
-process.SiPixelDigiSource.isPIB = False
-process.SiPixelDigiSource.slowDown = False
-process.SiPixelDigiSource.modOn = True
-process.SiPixelDigiSource.twoDimOn = True
-process.SiPixelDigiSource.hiRes = True
-process.SiPixelDigiSource.ladOn = False
-process.SiPixelDigiSource.layOn = False
-process.SiPixelDigiSource.phiOn = False
-process.SiPixelDigiSource.bladeOn = False
-process.SiPixelDigiSource.diskOn = False
-process.SiPixelDigiSource.ringOn = False
-
-process.load("DQM.SiPixelMonitorCluster.SiPixelMonitorCluster_cfi")
-process.SiPixelClusterSource.saveFile = False
-process.SiPixelClusterSource.isPIB = False
-process.SiPixelClusterSource.modOn = True
-process.SiPixelClusterSource.twoDimOn = True
-process.SiPixelClusterSource.reducedSet = False
-process.SiPixelClusterSource.ladOn = False
-process.SiPixelClusterSource.layOn = False
-process.SiPixelClusterSource.phiOn = False
-process.SiPixelClusterSource.bladeOn = False
-process.SiPixelClusterSource.diskOn = False
-process.SiPixelClusterSource.ringOn = False
-
-process.load("DQM.SiPixelMonitorRecHit.SiPixelMonitorRecHit_cfi")
-process.SiPixelRecHitSource.saveFile = False
-process.SiPixelRecHitSource.isPIB = False
-process.SiPixelRecHitSource.modOn = True
-process.SiPixelRecHitSource.twoDimOn = True
-process.SiPixelRecHitSource.ladOn = False
-process.SiPixelRecHitSource.layOn = False
-process.SiPixelRecHitSource.phiOn = False
-process.SiPixelRecHitSource.bladeOn = False
-process.SiPixelRecHitSource.ringOn = False
-process.SiPixelRecHitSource.diskOn = False
-
 process.load("CalibTracker.SiPixelTools.SiPixelErrorsCalibDigis_cfi")
 process.siPixelErrorsDigisToCalibDigis.saveFile=False
 process.siPixelErrorsDigisToCalibDigis.SiPixelProducerLabelTag = 'siPixelCalibDigis'
@@ -133,23 +88,13 @@ process.qTester = cms.EDAnalyzer("QualityTester",
     getQualityTestsFromFile = cms.untracked.bool(True)
 )
 
-process.ModuleWebRegistry = cms.Service("ModuleWebRegistry")
-
-process.LockService = cms.Service("LockService",
-    labels = cms.untracked.vstring('source')
-)
-
 process.Reco = cms.Sequence(process.siPixelDigis)
 process.Calibration = cms.Sequence(process.siPixelCalibDigis*process.siPixelGainCalibrationAnalysis)
-process.RAWmonitor = cms.Sequence(process.SiPixelRawDataErrorSource)
-process.DIGImonitor = cms.Sequence(process.SiPixelDigiSource)
-process.CLUmonitor = cms.Sequence(process.SiPixelClusterSource)
-process.HITmonitor = cms.Sequence(process.SiPixelRecHitSource)
 process.DQMmodules = cms.Sequence(process.qTester*process.dqmEnv*process.dqmSaver)
 process.p = cms.Path(process.Reco*process.qTester*process.dqmEnv*process.Calibration*process.sipixelEDAClient*process.dqmSaver)
 
 # cms.Path(process.Reco*process.DQMmodules*process.Calibration*process.RAWmonitor*process.DIGImonitprocess.sipixelEDAClient)
-process.DQM.collectorHost = ''
+#process.DQM.collectorHost = ''
 process.dqmSaver.convention = 'Online'
 process.dqmSaver.producer = 'DQM'
 process.dqmEnv.subSystemFolder = 'Pixel'
