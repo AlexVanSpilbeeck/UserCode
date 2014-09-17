@@ -44,7 +44,8 @@ exit
 set_parameters(){
   if [ "$indir" == "" ] && [ "$storedir" == "" ];then
     indir=/castor/cern.ch/user/${USER:0:1}/$USER/GainCalib_run$run
-    storedir=/castor/cern.ch/user/${USER:0:1}/$USER/
+    #storedir=/castor/cern.ch/user/${USER:0:1}/$USER/
+    storedir=/store/caf/user/$USER/
   fi
 
 
