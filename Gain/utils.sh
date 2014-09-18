@@ -31,9 +31,12 @@ set_T2_specifics(){
 }
 
 set_castor_specifics(){
-  T2_LS='nsls'
-  T2_RM='nsrm'
-  T2_CP='rfcp'
+# T2_LS='nsls'
+  T2_LS='cmsLs'
+#  T2_RM='nsrm'
+  T2_RM='cmsRm'
+#  T2_CP='rfcp'
+  T2_CP='cmsStage'
   T2_MKDIR='rfmkdir'
   T2_CHMOD='rfchmod'
   T2_FSYS='rfio://'
