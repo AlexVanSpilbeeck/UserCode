@@ -1,6 +1,7 @@
 #!/bin/bash
 
-source /sandbox/cmss/cmsset_default.sh
+#source /sandbox/cmss/cmsset_default.sh
+source /afs/cern.ch/cms/cmsset_default.sh
 
 startdir=T2_TMP_DIR/gain_calib_NUM
 mkdir -p $startdir
