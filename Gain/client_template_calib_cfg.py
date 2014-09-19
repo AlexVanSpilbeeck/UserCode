@@ -35,8 +35,9 @@ process.load("DQMServices.Core.DQM_cfg")
 process.load("DQMServices.Components.DQMEnvironment_cfi")
 
 process.load("Configuration.StandardSequences.FrontierConditions_GlobalTag_cff")
-process.GlobalTag.connect = "frontier://FrontierProd/CMS_COND_31X_GLOBALTAG"
-process.GlobalTag.globaltag = "GR_P_V17::All"
+#process.GlobalTag.connect = "frontier://FrontierProd/CMS_COND_31X_GLOBALTAG"
+#process.GlobalTag.globaltag = "GR_P_V17::All"
+process.GlobalTag.globaltag = "GR_R_71_V7::All"
 
 from CondCore.DBCommon.CondDBCommon_cfi import *
 process.siPixelCalibGlobalTag =  cms.ESSource("PoolDBESSource",
